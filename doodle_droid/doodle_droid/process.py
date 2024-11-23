@@ -1,8 +1,8 @@
 import rclpy
 from rclpy.node import Node
-import linedraw.linedraw as ld
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
+from linedraw import linedraw
 
 class Image_Processing_Node(Node):
     def __init__(self):
@@ -23,7 +23,7 @@ class Image_Processing_Node(Node):
         
     def linedraw(self):
         cv_image = self.bridge.imgmsg_to_cv2(self.new_image, desired_encoding='bgr8')
-        lines = ld.sketch(cv_image)
+        lines = linedraw.sketch(cv_image)
         lined_image = self.bridge.cv2_to_imgmsg(lines, encoding='bgr8')
         
         self.pub.publish(lined_image)
