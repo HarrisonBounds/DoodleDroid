@@ -9,9 +9,9 @@
   -  Determines the drawing surface plane by probing some points on the surface, similar to a 3D printer
 ### Motion Planner: Han, David, Harrison
   - Preliminary:
-    - [ ] use MoveIt to generate test drawing sequences
-    - [x] Lines -> line route (David)
-  - [ ] Calibration -> querable height map.
+    - [ ] use MoveIt to generate test drawing sequences (Han: Due Nov 25th)
+    - [x] Lines -> line route (David: Due Nov 25; Done Nov 22)
+  - [ ] Calibration -> querable height map (David: no deadline).
   - [ ] Line route + height map + thicknesses -> XYZ route + thicknesses
   - [ ] XYZ+ thickness route -> joint sequence
   - [ ] (stretch-contigent) thickness sequence -> target forces.
