@@ -1,0 +1,6 @@
+[submodule "doodle_droid/doodle_droid/doodle_droid/doodle_droid/linedraw"]
+	path = doodle_droid/doodle_droid/doodle_droid/doodle_droid/linedraw
+	url = git@github.com:LingDong-/linedraw.git
+[submodule "doodle_droid/doodle_droid/linedraw"]
+	path = doodle_droid/doodle_droid/linedraw
+	url = git@github.com:LingDong-/linedraw.git
