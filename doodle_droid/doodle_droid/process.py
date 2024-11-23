@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
-fromlinedraw import linedraw
+from linedraw import linedraw
 
 
 class Image_Processing_Node(Node):
