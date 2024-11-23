@@ -6,7 +6,7 @@ from PIL import Image, ImageDraw, ImageOps
 
 from doodle_droid.linedraw.filters import *
 from doodle_droid.linedraw.strokesort import *
-import doodle_droid.linedraw.perlin
+from doodle_droid.linedraw import perlin
 from doodle_droid.linedraw.util import *
 
 no_cv = False
