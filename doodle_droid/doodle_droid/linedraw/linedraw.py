@@ -4,10 +4,10 @@ import argparse
 
 from PIL import Image, ImageDraw, ImageOps
 
-from filters import *
-from strokesort import *
-import perlin
-from util import *
+from doodle_droid.linedraw.filters import *
+from doodle_droid.linedraw.strokesort import *
+import doodle_droid.linedraw.perlin
+from doodle_droid.linedraw.util import *
 
 no_cv = False
 export_path = "output/out.svg"

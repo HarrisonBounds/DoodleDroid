@@ -1,6 +1,6 @@
 from random import *
 from PIL import Image, ImageDraw, ImageOps
-from util import *
+from doodle_droid.linedraw.util import *
 
 
 def sortlines(lines):

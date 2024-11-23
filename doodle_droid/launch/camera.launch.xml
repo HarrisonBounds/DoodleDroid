@@ -1,5 +1,5 @@
 <launch>
-    <!-- <arg name="camera_name" default="usb_cam" />
+    <arg name="camera_name" default="usb_cam" />
     <arg name="video_device" default="/dev/video0" />
     <arg name="image_width" default="640" />
     <arg name="image_height" default="480" />
@@ -18,7 +18,7 @@
         <param name="pixel_format" value="$(var pixel_format)" />
         <param name="io_method" value="$(var io_method)" />
         <param name="camera_frame_id" value="$(var camera_frame_id)" />
-    </node> -->
+    </node>
 
     <node pkg="doodle_droid" exec="image_processing_node"/>
 </launch>

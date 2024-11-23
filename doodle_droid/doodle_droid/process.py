@@ -1,20 +1,19 @@
 import rclpy
 from rclpy.node import Node
 from cv_bridge import CvBridge
-from sensor_msgs.msg import Image
-from linedraw import linedraw
-
+from sensor_msgs.msg import CompressedImage
+from std_srvs.srv import Empty
+from doodle_droid.linedraw.linedraw import *
 
 class Image_Processing_Node(Node):
     def __init__(self):
         super().__init__('image_processing_node')
-        self.image_sub = self.create_subscription(Image, '/image_raw', callback=self.image_processing_callback)
-        self.take_picture = self.create_service(Image, 'take_picture', self.get_image)
+        self.image_sub = self.create_subscription(CompressedImage, '/image_raw/compressed', self.image_processing_callback, 10)
+        self.take_picture = self.create_service(Empty, 'take_picture', self.get_image)
         self.pub = self.create_publisher(Image, 'new_image', 10)
         self.bridge = CvBridge()
         self.new_image = None
         
-
     def image_processing_callback(self, msg):
         self.old_image = msg
     
