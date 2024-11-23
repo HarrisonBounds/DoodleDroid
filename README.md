@@ -1,12 +1,26 @@
 # DoodleDroid
 
 ## Tasks: Bold name is main contributor
--  Image input (stretch): Harrison and Yanni
--  Image processor: Harrison and Yanni
--  Calibrator: Yanni, Christian
--  Motion Planner: Han, David, Harrison
--  Path Executor: Han, Christian, David
--  Force Control (stretch): David
+### Image processor: Harrison and Yanni
+  - Takes in an image, and converts it to a line half-tone image
+  - We may use this github repo:  https://github.com/GravO8/halftone-lines
+  - Outputs the lines the robot should draw (along with their thicknesses)
+### Calibrator: Yanni, Christian
+  -  Determines the drawing surface plane by probing some points on the surface, similar to a 3D printer
+### Motion Planner: Han, David, Harrison
+  - Preliminary:
+    - [ ] use MoveIt to generate test drawing sequences
+    - [x] Lines -> line route (David)
+  - [ ] Calibration -> querable height map.
+  - [ ] Line route + height map + thicknesses -> XYZ route + thicknesses
+  - [ ] XYZ+ thickness route -> joint sequence
+  - [ ] (stretch-contigent) thickness sequence -> target forces.
+### Path Executor: Han, Christian, David
+  -  Executes the robot joint trajectories
+### Stretch
+#### Force Control (stretch): David
+  - [ ] Pending evaluation of if single-width lines are sufficient.
+#### Image input (stretch): Harrison and Yanni
 
 ## Secondary roles:
 Dev-ops:  David
