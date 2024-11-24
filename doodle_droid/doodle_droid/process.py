@@ -7,7 +7,7 @@ from sensor_msgs.msg import CompressedImage
 from std_srvs.srv import Empty
 from cv_bridge import CvBridge
 import cv2 as cv
-from doodle_droid.linedraw.linedraw import *
+from doodle_droid.linedraw import linedraw
 
 
 class ImageProcessingNode(Node):
@@ -26,7 +26,9 @@ class ImageProcessingNode(Node):
     def capture_image(self, request, response):
         cv_image = self.bridge.compressed_imgmsg_to_cv2(self.current_image, desired_encoding='passthrough')
         cv.imwrite("images/output.jpg", cv_image) #Convert numpy array tp jpg for image processing
+        self.get_logger().info("Begin processing")
         lined_image = linedraw.sketch("images/output.jpg")
+        self.get_logger().info("Finished processing")
         
         return response
 
