@@ -19,4 +19,6 @@
         <param name="io_method" value="$(var io_method)" />
         <param name="camera_frame_id" value="$(var camera_frame_id)" />
     </node>
+
+    <node pkg='doodle_droid' exec='image_processing_node'/>
 </launch>

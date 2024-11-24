@@ -21,6 +21,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'image_processing_node = doodle_droid.process:main'
         ],
     },
 )
