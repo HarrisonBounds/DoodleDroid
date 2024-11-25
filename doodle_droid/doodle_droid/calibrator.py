@@ -15,8 +15,10 @@ import numpy as np
 from apriltag import apriltag
 from scipy.spatial.transform import Rotation as R
 
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Pose, TransformStamped
 
+from tf2_ros import TransformBroadcaster
+from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
 
 
 class Calibrator(Node):
@@ -53,6 +55,16 @@ class Calibrator(Node):
                                   [0, self.fy, self.cy],
                                   [0, 0, 1]])
 
+        self.static_broadcaster = StaticTransformBroadcaster(self)
+        world_camera_tf = TransformStamped()
+        world_camera_tf.header.stamp = self.get_clock().now().to_msg()
+        world_camera_tf.header.frame_id = 'world'
+        world_camera_tf.child_frame_id = 'camera'
+        world_camera_tf.transform.translation.x = 0.0
+        world_camera_tf.transform.translation.y = 0.0
+        world_camera_tf.transform.translation.z = 0.0
+        self.static_broadcaster.sendTransform(world_camera_tf)
+
         self.get_logger().info("calibrator initialized")
 
     
@@ -88,8 +100,8 @@ class Calibrator(Node):
                 pose = Pose()
 
                 pose.position.x = translation_vector[0][0]
-                pose.position.y = translation_vector[0][1]
-                pose.position.z = translation_vector[0][2]
+                pose.position.y = translation_vector[1][0]
+                pose.position.z = translation_vector[2][0]
 
                 pose.orientation.x = quaternion[0]
                 pose.orientation.y = quaternion[1]
@@ -99,7 +111,7 @@ class Calibrator(Node):
                 self.surface_pose = pose
         
         if self.surface_pose is not None:
-            surface = self.create_marker(0, 'surface', 'map', self.surface_pose, [1.0, 1.0, 0.1], [1.0, 1.0, 1.0])
+            surface = self.create_marker(0, 'surface', 'camera', self.surface_pose, [2.0, 2.0, 0.1], [1.0, 1.0, 1.0])
             self.surface_publisher.publish(surface)
 
 
