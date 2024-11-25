@@ -28,7 +28,7 @@ class ImageProcessingNode(Node):
         cv_image = self.bridge.compressed_imgmsg_to_cv2(self.current_image, desired_encoding='passthrough')
         cv.imwrite(self.absolute_path, cv_image) #Convert numpy array tp jpg for image processing
         self.get_logger().info("Begin processing")
-        lined_image = linedraw.sketch(self.absolute_path)
+        lined_image = doodle_droid.linedraw.linedraw.sketch(self.absolute_path)
         self.get_logger().info("Finished processing")
         
         return response
