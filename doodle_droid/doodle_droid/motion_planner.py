@@ -17,6 +17,12 @@ Motion Planner Class.
 
 The Motion Planner Class communicates through several ROS 2 protocols:
 
+ACTIONS:
++ /move_action (moveit_msgs.action.MoveGroup) - To plan or execute to a goal
+state.
++ /fer_arm_controller/follow_joint_trajectory
+(control_msgs.action.FollowJointTrajectory) - To execute a joint trajectory.
+
 SERVICES:
 + /compute_cartesian_path (moveit_msgs.srv.GetCartesianPath) - To compute
 the cartesian path.
@@ -68,6 +74,13 @@ class MotionPlanner():
     Motion Planner Class.
 
     The Motion Planner Class communicates through several ROS 2 protocols:
+
+    ACTIONS:
+    + /move_action (moveit_msgs.action.MoveGroup) - To plan or execute to a
+    goal state.
+    + /fer_arm_controller/follow_joint_trajectory
+    (control_msgs.action.FollowJointTrajectory) - To execute a joint
+    trajectory.
 
     SERVICES:
     + /compute_cartesian_path (moveit_msgs.srv.GetCartesianPath) - To compute
