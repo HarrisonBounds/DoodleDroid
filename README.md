@@ -28,3 +28,8 @@ Reliability: Harrison
 Code hygienist: Christian
 Integration: Han
 Hardware Engineer: Yanni
+
+## meeting notes
+### 2024 11 25
+- All 5 members in attendance
+- 
