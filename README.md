@@ -7,7 +7,7 @@
   - Outputs the lines the robot should draw (along with their thicknesses)
 ### Calibrator: Yanni, Christian
   -  Determines the drawing surface plane by probing some points on the surface, similar to a 3D printer
-### Motion Planner: Han, David, Harrison
+### Motion Planner: David, Han, Harrison
   - Preliminary:
     - [ ] use MoveIt to generate test drawing sequences (Han: Due Nov 25th)
     - [x] Lines -> line route (David: Due Nov 25; Done Nov 22)
@@ -32,4 +32,10 @@ Hardware Engineer: Yanni
 ## meeting notes
 ### 2024 11 25
 - All 5 members in attendance
-- 
+- Harrision:
+  - [ ] will simplify number of lines in the line drawing.
+  - [ ] will integrate into ros & debug imports
+  - [ ] will share poly line outputs of the processed image
+- Yanni:
+  - has an april tag to ros reader with plane visualizer
+  - [ ] will add multiple april tags and average readings
