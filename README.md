@@ -2,7 +2,7 @@
 
 ## Tasks: Bold name is main contributor
 ### Image processor: Harrison and Yanni
-  - Takes in an image, and converts it to a line half-tone image
+  - [x] Takes in an image, and converts it to a line half-tone image
   - We may use this github repo:  https://github.com/GravO8/halftone-lines
   - Outputs the lines the robot should draw (along with their thicknesses)
 ### Calibrator: Yanni, Christian

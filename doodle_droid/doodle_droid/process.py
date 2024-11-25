@@ -18,6 +18,7 @@ class ImageProcessingNode(Node):
         self.take_picture_service = self.create_service(Empty, '/take_picture', self.capture_image)
         self.processed_image_pub = self.create_publisher(CompressedImage, '/new_image', 10)
         self.current_image = None
+        self.absolute_path = '/home/harrison-bounds/ws/ES_HW/doodle_droid/src/DoodleDroid/doodle_droid/doodle_droid/images/output.jpg'
         self.bridge = CvBridge()
         
     def get_image_callback(self, msg):
@@ -25,8 +26,10 @@ class ImageProcessingNode(Node):
     
     def capture_image(self, request, response):
         cv_image = self.bridge.compressed_imgmsg_to_cv2(self.current_image, desired_encoding='passthrough')
-        cv.imwrite("images/output.jpg", cv_image) #Convert numpy array tp jpg for image processing
-        lined_image = linedraw.sketch("images/output.jpg")
+        cv.imwrite(self.absolute_path, cv_image) #Convert numpy array tp jpg for image processing
+        self.get_logger().info("Begin processing")
+        lined_image = doodle_droid.linedraw.linedraw.sketch(self.absolute_path)
+        self.get_logger().info("Finished processing")
         
         return response
 
