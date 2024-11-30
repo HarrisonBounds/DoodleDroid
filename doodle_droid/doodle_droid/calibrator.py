@@ -21,6 +21,16 @@ from tf2_ros import TransformBroadcaster
 from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
 
 
+def angle_from_centroid(pt, centroid):
+    dx = pt[0] - centroid[0]
+    dy = pt[1] - centroid[1]
+    return np.arctan2(dy, dx)
+
+def distance(p1,p2):
+        return np.linalg.norm(p1-p2)
+
+
+
 class Calibrator(Node):
     """
 
@@ -84,7 +94,7 @@ class Calibrator(Node):
             
             detection_num = 0
             detected_orientations = []
-            centers = []
+            detected_positions = []
             if len(detections)>0: # only look at first detection for now
                 for detection in detections:
                     corners = np.array(detection['lb-rb-rt-lt'], dtype=np.float32)
@@ -117,13 +127,22 @@ class Calibrator(Node):
                     pose.orientation.w = quaternion[3]
 
                     detected_orientations.append(quaternion)
+                    detected_positions.append(reshaped_vector)
 
                     self.surface_pose = pose
 
-                    surface = self.create_marker(detection_num, 'surface', 'camera', pose, [self.tagsize, self.tagsize, 0.1], [1.0, 1.0, 1.0])
+                    surface = self.create_marker(detection_num, 'surface', 'camera', pose, [self.tagsize, self.tagsize, 0.1], [1.0, 1.0, 1.0], 0.5)
                     self.surface_publisher.publish(surface)
+                    pt = self.create_marker(detection_num, 'pt', 'camera', pose, [0.03, 0.03, 0.03], [1.0, 0.0, 0.0], 1.0)
+                    self.surface_publisher.publish(pt)
 
                     detection_num += 1
+
+                avg_position = np.mean(detected_positions, axis=0) # calculate average position of four april tags (hopefully more accurate)
+                self.surface_pose.position.x = avg_position[0]
+                self.surface_pose.position.y = avg_position[1]
+                self.surface_pose.position.z = avg_position[2]
+                
 
                 avg_orientation = np.mean(detected_orientations, axis=0) # calculate average orientation of four april tags (hopefully more accurate)
                 avg_orientation /= np.linalg.norm(avg_orientation)
@@ -132,54 +151,21 @@ class Calibrator(Node):
                 self.surface_pose.orientation.z = avg_orientation[2]
                 self.surface_pose.orientation.w = avg_orientation[3]
 
-                if len(centers) >= 4:
-                    centers = np.array(centers, dtype=np.int32)
-                    centroid = np.mean(centers, axis=0).astype(float)
-                    
-                    def angle_from_centroid(center):
-                        dx = center[0] - centroid[0]
-                        dy = center[1] - centroid[1]
-                        return np.arctan2(dy, dx)
-                    
-                    def distance(p1,p2):
-                        return np.linalg.norm(p1-p2)
- 
-                    sorted_centers = sorted(centers, key=angle_from_centroid) # orders centers as bot left, bot right, top right, top left
+                if len(detected_positions) >= 4:
+                    sorted_positions = sorted(
+                        detected_positions,
+                        key=lambda pt: angle_from_centroid(pt, avg_position)
+)                        # orders centers as bot left, bot right, top right, top left
+                    width = distance(sorted_positions[0], sorted_positions[1])
+                    height = distance(sorted_positions[0], sorted_positions[3])
 
-                    # centers = np.array(sorted_centers)
-
-                    width = distance(sorted_centers[0], sorted_centers[1])
-                    height = distance(sorted_centers[0], sorted_centers[3])
-
-                    self.get_logger().info(f"Width: {width:.2f}, Height: {height:.2f}")
-
-                    # self.surface_pose.position.x = centroid[0]
-                    # self.surface_pose.position.y = centroid[1]
-
-                    # surface = self.create_marker(999, 'surface', 'camera', self.surface_pose, [2.0, 2.0, 0.1], [0.0, 1.0, 1.0])
-                    # self.surface_publisher.publish(surface)
-
-                    # centers = centers.reshape((-1, 1, 2))
-
-
-                    # cv2.polylines(cv_image, [centers], isClosed=True, color=(0, 255, 0), thickness=2)
-
-                    # # Draw the centroid (red circle)
-                    # cv2.circle(cv_image, centroid, 5, (0, 0, 255), -1)  # Red circle for the centroid
-
-                    # # Show the image
-                    # cv2.imshow("Calibrator Image", cv_image)
-                    # cv2.waitKey(1)
-
-        if self.surface_pose is not None:
-            surface = self.create_marker(999, 'surface', 'camera', self.surface_pose, [2.0, 2.0, 0.1], [0.0, 1.0, 1.0])
-            self.surface_publisher.publish(surface)
-
+                    surface = self.create_marker(999, 'surface', 'camera', self.surface_pose, [height-self.tagsize/2, width-self.tagsize/2, 0.1], [0.0, 1.0, 1.0], 1.0)
+                    self.surface_publisher.publish(surface)
 
     def get_image_callback(self, msg):
         self.current_image = msg
 
-    def create_marker(self, m_id, name, frame, pose, scale, col):
+    def create_marker(self, m_id, name, frame, pose, scale, col, a):
         """
         Create a standard cube marker object for visualization.
 
@@ -215,7 +201,7 @@ class Calibrator(Node):
         marker.color.r = col[0]
         marker.color.g = col[1]
         marker.color.b = col[2]
-        marker.color.a = 1.0
+        marker.color.a = a
 
         marker.lifetime = Duration(sec=0, nanosec=0)
 
