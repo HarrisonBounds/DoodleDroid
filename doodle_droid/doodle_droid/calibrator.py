@@ -43,6 +43,9 @@ class Calibrator(Node):
         self.bridge = CvBridge()
         self.current_image = None
         self.surface_pose = None
+        self.detected_poses = []
+        self.detected_orientations = []
+        self.detected_positions = []
         self.detector = apriltag("tagStandard41h12")
  
         self.fx = 600   # dummy parameters for now
@@ -80,6 +83,7 @@ class Calibrator(Node):
             detections = self.detector.detect(gray)
             
             detection_num = 0
+            detected_orientations = []
             if len(detections)>0: # only look at first detection for now
                 for detection in detections:
                     corners = np.array(detection['lb-rb-rt-lt'], dtype=np.float32)
@@ -109,17 +113,30 @@ class Calibrator(Node):
                     pose.orientation.z = quaternion[2]
                     pose.orientation.w = quaternion[3]
 
-                    # if self.surface_pose is not None:
+                    # self.detected_poses.append(pose)
+                    detected_orientations.append(quaternion)
+
+                    self.surface_pose  = pose
+
                     surface = self.create_marker(detection_num, 'surface', 'camera', pose, [0.5, 0.5, 0.1], [1.0, 1.0, 1.0])
                     self.surface_publisher.publish(surface)
 
                     detection_num+=1
 
-                    self.surface_pose = pose
+                avg_orientation = np.mean(detected_orientations, axis=0)
+                avg_orientation /= np.linalg.norm(avg_orientation)  # Normalize
+                self.surface_pose.orientation.x = avg_orientation[0]
+                self.surface_pose.orientation.y = avg_orientation[1]
+                self.surface_pose.orientation.z = avg_orientation[2]
+                self.surface_pose.orientation.w = avg_orientation[3]
+
+
+
+
         
-        # if self.surface_pose is not None:
-        #     surface = self.create_marker(0, 'surface', 'camera', self.surface_pose, [2.0, 2.0, 0.1], [1.0, 1.0, 1.0])
-        #     self.surface_publisher.publish(surface)
+        if self.surface_pose is not None:
+            surface = self.create_marker(999, 'surface', 'camera', self.surface_pose, [2.0, 2.0, 0.1], [0.0, 1.0, 1.0])
+            self.surface_publisher.publish(surface)
 
 
     def get_image_callback(self, msg):
