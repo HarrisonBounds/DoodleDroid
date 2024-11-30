@@ -84,15 +84,17 @@ class Calibrator(Node):
             
             detection_num = 0
             detected_orientations = []
+            centers = []
             if len(detections)>0: # only look at first detection for now
                 for detection in detections:
                     corners = np.array(detection['lb-rb-rt-lt'], dtype=np.float32)
-        
+                    # centers.append(detection['center'])
+                    
                     object_points = np.array([
-                        [-self.tagsize / 2, -self.tagsize / 2, 0], 
-                        [self.tagsize / 2, -self.tagsize / 2, 0], 
-                        [self.tagsize / 2, self.tagsize / 2, 0],   
-                        [-self.tagsize / 2, self.tagsize / 2, 0]   
+                        [-self.tagsize / 2, -self.tagsize / 2, 0],
+                        [self.tagsize / 2, -self.tagsize / 2, 0],
+                        [self.tagsize / 2, self.tagsize / 2, 0],
+                        [-self.tagsize / 2, self.tagsize / 2, 0]
                     ], dtype=np.float32)
 
                     _, rotation_vector, translation_vector = cv2.solvePnP(object_points, corners, self.camera_matrix, None)
@@ -104,36 +106,71 @@ class Calibrator(Node):
 
                     pose = Pose()
 
-                    pose.position.x = translation_vector[0][0]
-                    pose.position.y = translation_vector[1][0]
-                    pose.position.z = translation_vector[2][0]
+                    reshaped_vector = translation_vector.reshape(3,)
+                    pose.position.x = reshaped_vector[0]
+                    pose.position.y = reshaped_vector[1]
+                    pose.position.z = reshaped_vector[2]
 
                     pose.orientation.x = quaternion[0]
                     pose.orientation.y = quaternion[1]
                     pose.orientation.z = quaternion[2]
                     pose.orientation.w = quaternion[3]
 
-                    # self.detected_poses.append(pose)
                     detected_orientations.append(quaternion)
 
-                    self.surface_pose  = pose
+                    self.surface_pose = pose
 
-                    surface = self.create_marker(detection_num, 'surface', 'camera', pose, [0.5, 0.5, 0.1], [1.0, 1.0, 1.0])
+                    surface = self.create_marker(detection_num, 'surface', 'camera', pose, [self.tagsize, self.tagsize, 0.1], [1.0, 1.0, 1.0])
                     self.surface_publisher.publish(surface)
 
-                    detection_num+=1
+                    detection_num += 1
 
-                avg_orientation = np.mean(detected_orientations, axis=0)
-                avg_orientation /= np.linalg.norm(avg_orientation)  # Normalize
+                avg_orientation = np.mean(detected_orientations, axis=0) # calculate average orientation of four april tags (hopefully more accurate)
+                avg_orientation /= np.linalg.norm(avg_orientation)
                 self.surface_pose.orientation.x = avg_orientation[0]
                 self.surface_pose.orientation.y = avg_orientation[1]
                 self.surface_pose.orientation.z = avg_orientation[2]
                 self.surface_pose.orientation.w = avg_orientation[3]
 
+                if len(centers) >= 4:
+                    centers = np.array(centers, dtype=np.int32)
+                    centroid = np.mean(centers, axis=0).astype(float)
+                    
+                    def angle_from_centroid(center):
+                        dx = center[0] - centroid[0]
+                        dy = center[1] - centroid[1]
+                        return np.arctan2(dy, dx)
+                    
+                    def distance(p1,p2):
+                        return np.linalg.norm(p1-p2)
+ 
+                    sorted_centers = sorted(centers, key=angle_from_centroid) # orders centers as bot left, bot right, top right, top left
+
+                    # centers = np.array(sorted_centers)
+
+                    width = distance(sorted_centers[0], sorted_centers[1])
+                    height = distance(sorted_centers[0], sorted_centers[3])
+
+                    self.get_logger().info(f"Width: {width:.2f}, Height: {height:.2f}")
+
+                    # self.surface_pose.position.x = centroid[0]
+                    # self.surface_pose.position.y = centroid[1]
+
+                    # surface = self.create_marker(999, 'surface', 'camera', self.surface_pose, [2.0, 2.0, 0.1], [0.0, 1.0, 1.0])
+                    # self.surface_publisher.publish(surface)
+
+                    # centers = centers.reshape((-1, 1, 2))
 
 
+                    # cv2.polylines(cv_image, [centers], isClosed=True, color=(0, 255, 0), thickness=2)
 
-        
+                    # # Draw the centroid (red circle)
+                    # cv2.circle(cv_image, centroid, 5, (0, 0, 255), -1)  # Red circle for the centroid
+
+                    # # Show the image
+                    # cv2.imshow("Calibrator Image", cv_image)
+                    # cv2.waitKey(1)
+
         if self.surface_pose is not None:
             surface = self.create_marker(999, 'surface', 'camera', self.surface_pose, [2.0, 2.0, 0.1], [0.0, 1.0, 1.0])
             self.surface_publisher.publish(surface)
