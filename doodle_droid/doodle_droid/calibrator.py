@@ -79,40 +79,47 @@ class Calibrator(Node):
             gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
             detections = self.detector.detect(gray)
             
+            detection_num = 0
             if len(detections)>0: # only look at first detection for now
-                detection = detections[0]
-                corners = np.array(detection['lb-rb-rt-lt'], dtype=np.float32)
-    
-                object_points = np.array([
-                    [-self.tagsize / 2, -self.tagsize / 2, 0], 
-                    [self.tagsize / 2, -self.tagsize / 2, 0], 
-                    [self.tagsize / 2, self.tagsize / 2, 0],   
-                    [-self.tagsize / 2, self.tagsize / 2, 0]   
-                ], dtype=np.float32)
-
-                _, rotation_vector, translation_vector = cv2.solvePnP(object_points, corners, self.camera_matrix, None)
-
-                rotation_matrix, _ = cv2.Rodrigues(rotation_vector)
-
-                r = R.from_matrix(rotation_matrix)
-                quaternion = r.as_quat() 
-
-                pose = Pose()
-
-                pose.position.x = translation_vector[0][0]
-                pose.position.y = translation_vector[1][0]
-                pose.position.z = translation_vector[2][0]
-
-                pose.orientation.x = quaternion[0]
-                pose.orientation.y = quaternion[1]
-                pose.orientation.z = quaternion[2]
-                pose.orientation.w = quaternion[3]
-
-                self.surface_pose = pose
+                for detection in detections:
+                    corners = np.array(detection['lb-rb-rt-lt'], dtype=np.float32)
         
-        if self.surface_pose is not None:
-            surface = self.create_marker(0, 'surface', 'camera', self.surface_pose, [2.0, 2.0, 0.1], [1.0, 1.0, 1.0])
-            self.surface_publisher.publish(surface)
+                    object_points = np.array([
+                        [-self.tagsize / 2, -self.tagsize / 2, 0], 
+                        [self.tagsize / 2, -self.tagsize / 2, 0], 
+                        [self.tagsize / 2, self.tagsize / 2, 0],   
+                        [-self.tagsize / 2, self.tagsize / 2, 0]   
+                    ], dtype=np.float32)
+
+                    _, rotation_vector, translation_vector = cv2.solvePnP(object_points, corners, self.camera_matrix, None)
+
+                    rotation_matrix, _ = cv2.Rodrigues(rotation_vector)
+
+                    r = R.from_matrix(rotation_matrix)
+                    quaternion = r.as_quat() 
+
+                    pose = Pose()
+
+                    pose.position.x = translation_vector[0][0]
+                    pose.position.y = translation_vector[1][0]
+                    pose.position.z = translation_vector[2][0]
+
+                    pose.orientation.x = quaternion[0]
+                    pose.orientation.y = quaternion[1]
+                    pose.orientation.z = quaternion[2]
+                    pose.orientation.w = quaternion[3]
+
+                    # if self.surface_pose is not None:
+                    surface = self.create_marker(detection_num, 'surface', 'camera', pose, [0.5, 0.5, 0.1], [1.0, 1.0, 1.0])
+                    self.surface_publisher.publish(surface)
+
+                    detection_num+=1
+
+                    self.surface_pose = pose
+        
+        # if self.surface_pose is not None:
+        #     surface = self.create_marker(0, 'surface', 'camera', self.surface_pose, [2.0, 2.0, 0.1], [1.0, 1.0, 1.0])
+        #     self.surface_publisher.publish(surface)
 
 
     def get_image_callback(self, msg):
