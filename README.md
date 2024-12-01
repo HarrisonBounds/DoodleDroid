@@ -30,6 +30,11 @@ Code hygienist: Christian
 Integration: Han
 Hardware Engineer: Yanni
 
+### Extra Notes 
+
+```
+sudo apt install ros-jazzy-usb-cam
+```
 ## meeting notes
 ### 2024 11 25
 - All 5 members in attendance
