@@ -28,3 +28,9 @@ Reliability: Harrison
 Code hygienist: Christian
 Integration: Han
 Hardware Engineer: Yanni
+
+### Extra Notes 
+
+```
+sudo apt install ros-jazzy-usb-cam
+```
