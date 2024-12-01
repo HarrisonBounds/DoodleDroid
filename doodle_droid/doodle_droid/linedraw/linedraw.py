@@ -170,15 +170,16 @@ def hatch(IM,sc=16):
 
 def sketch(path):
     IM = None
-    possible = [path,"images/"+path,"images/"+path+".jpg","images/"+path+".png","images/"+path+".tif"]
-    for p in possible:
-        try:
-            IM = Image.open(p)
-            break
-        except FileNotFoundError:
-            print("The Input File wasn't found. Check Path")
-            exit(0)
-            pass
+    # possible = [path,"images/"+path,"images/"+path+".jpg","images/"+path+".png","images/"+path+".tif"]
+    # for p in possible:
+    #     try:
+    #         IM = Image.open(p)
+    #         break
+    #     except FileNotFoundError:
+    #         print("The Input File wasn't found. Check Path")
+    #         exit(0)
+    #         pass
+    IM = Image.open(path)
     w,h = IM.size
 
     IM = IM.convert("L")
