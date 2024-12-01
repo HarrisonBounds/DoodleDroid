@@ -12,11 +12,11 @@ from doodle_droid.linedraw.util import *
 no_cv = False
 export_path = "/home/harrison-bounds/ws/ES_HW/doodle_droid/src/DoodleDroid/doodle_droid/doodle_droid/images/output.svg"
 draw_contours = True
-draw_hatch = True
+draw_hatch = False
 show_bitmap = False
 resolution = 1024
 hatch_size = 16
-contour_simplify = 2
+contour_simplify = 3
 
 try:
     import numpy as np
@@ -199,11 +199,11 @@ def sketch(path):
             draw.line(l,(0,0,0),5)
         disp.show()
 
-    # f = open(export_path,'w')
-    # f.write(makesvg(lines))
-    # f.close()
-    # print(len(lines),"strokes.")
-    # print("done.")
+    f = open(export_path,'w')
+    f.write(makesvg(lines))
+    f.close()
+    print(len(lines),"strokes.")
+    print("done.")
     return lines
 
 

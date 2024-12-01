@@ -1,3 +1,4 @@
+import doodle_droid.linedraw.linedraw
 import rclpy
 import rclpy.parameter
 from rclpy.node import Node
@@ -10,6 +11,7 @@ import cv2 as cv
 from doodle_droid.linedraw.linedraw import *
 from std_msgs.msg import String
 import json
+from ament_index_python.packages import get_package_share_directory
 
 
 class ImageProcessingNode(Node):
@@ -20,23 +22,34 @@ class ImageProcessingNode(Node):
         self.take_picture_service = self.create_service(Empty, '/take_picture', self.capture_image)
         self.processed_image_pub = self.create_publisher(String, '/new_image', 10)
         self.current_image = None
-        self.absolute_path = '/home/harrison-bounds/ws/ES_HW/doodle_droid/src/DoodleDroid/doodle_droid/doodle_droid/images/output.jpg'
+        self.absolute_path = '/home/harrison-bounds/ws/ES_HW/doodle_droid/src/DoodleDroid/doodle_droid/doodle_droid/images/my_smiley.jpeg'
+        self.pkg_name = "doodle_droid"
+        self.pkg_share = get_package_share_directory(self.pkg_name)
+        self.path = f"{self.pkg_share}/doodle_droid/images/my_smiley.jpeg"
         self.bridge = CvBridge()
+        self.from_file = True
         
     def get_image_callback(self, msg):
         self.current_image = msg
     
     def capture_image(self, request, response):
-        cv_image = self.bridge.compressed_imgmsg_to_cv2(self.current_image, desired_encoding='passthrough')
-        self.get_logger().info(f"cv image type: {type(cv_image)}")
-        lined_image = doodle_droid.linedraw.linedraw.sketch(cv_image)
-        self.get_logger().info(f"Number of strokes: {len(lined_image)} ")
-        self.get_logger().info("Finished processing")
-        
-        json_data = json.dumps(lined_image)
-        msg = String()
-        msg.data = json_data
-        self.processed_image_pub.publish(msg)
+        if not self.from_file:
+            cv_image = self.bridge.compressed_imgmsg_to_cv2(self.current_image, desired_encoding='passthrough')
+            self.get_logger().info(f"cv image type: {type(cv_image)}")
+            lined_image = doodle_droid.linedraw.linedraw.sketch(cv_image)
+            self.get_logger().info(f"Number of strokes: {len(lined_image)} ")
+            self.get_logger().info("Finished processing")
+            
+            json_data = json.dumps(lined_image)
+            msg = String()
+            msg.data = json_data
+            self.processed_image_pub.publish(msg)
+        else:
+            image = cv.imread(self.absolute_path)
+            image_array = np.array(image)
+            lined_image = doodle_droid.linedraw.linedraw.sketch(image_array)
+            self.get_logger().info(f"Number of strokes: {len(lined_image)} ")
+
                 
         return response
 
