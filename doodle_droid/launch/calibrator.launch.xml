@@ -1,0 +1,18 @@
+<launch>
+    <arg name="pixel_format" default="yuyv" />
+
+    <arg name="rviz_config" default="rviz_config.rviz" description="path to local rviz config relative to share directory"/>
+
+    
+    <node
+        pkg="usb_cam"
+        exec="usb_cam_node_exe"
+        output="screen">
+        <param name="pixel_format" value="$(var pixel_format)" />
+
+    </node>
+
+    <node pkg='doodle_droid' exec='calibrator'/>
+
+    <node pkg="rviz2" exec="rviz2"  args="-d $(find-pkg-share doodle_droid)/$(var rviz_config)"/>
+</launch>
