@@ -1,5 +1,6 @@
 # DoodleDroid
 
+https://docs.google.com/document/d/1tCsjUFVBGqud-HylWmlEa1OkyHOy-n-hFuSvpV8IUJU/edit?usp=sharing
 ## Tasks: Bold name is main contributor
 ### Image processor: Harrison and Yanni
   - [x] Takes in an image, and converts it to a line half-tone image
