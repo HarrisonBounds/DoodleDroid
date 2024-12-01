@@ -179,7 +179,7 @@ def sketch(path):
     #         print("The Input File wasn't found. Check Path")
     #         exit(0)
     #         pass
-    IM = Image.open(path)
+    IM = Image.fromarray(path)
     w,h = IM.size
 
     IM = IM.convert("L")
