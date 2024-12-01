@@ -21,21 +21,6 @@ def load_demo_lines():
 def lines_to_endpoints(lines):
     return [(tuple(line[0]), tuple(line[-1])) for line in lines]
 
-
-def plot_lines(lines, ax=None, **kwargs):
-    ax_was_none = ax is None
-    if ax is None:
-        fig, ax = plt.subplots()
-    for line in lines:
-        x, y = zip(*line)
-        if 'c' not in kwargs:
-            kwargs['c'] = 'k'
-
-        ax.plot(x, y, **kwargs)
-
-    if ax_was_none:
-        return fig, ax
-
 def get_cost_matrix(stroke_segments):
     n = len(stroke_segments)
     cost_matrix = np.zeros((2*n, 2*n))
@@ -91,54 +76,92 @@ def tsp_nearest_neighbor(dist_matrix):
     # Return to start city
     total_distance += dist_matrix[tour[-1], tour[0]]
     tour.append(0)
+    tour = [int(d) for d in tour]
 
     return tour, total_distance
 
 def stroke_dist(stroke):
     substroke_dists = np.linalg.norm(stroke[:-1] - stroke[1:], axis=1).sum()
     return substroke_dists
+
+def paper_height(x,y):
+    return 0.0
+
+def plot_lines(lines, ax=None, **kwargs):
+    ax_was_none = ax is None
+    if ax is None:
+        fig, ax = plt.subplots()
+    for line in lines:
+        x, y = zip(*line)
+        if 'c' not in kwargs:
+            kwargs['c'] = 'k'
+
+        ax.plot(x, y, **kwargs)
+
+    if ax_was_none:
+        return fig, ax
+    
+def tour_to_robot_waypoints(lines, tour):
+    pen_up_dists = []
+    robot_waypoints = []
+
+    for i, (j1, j2) in enumerate(zip(tour[:-1], tour[1:])):
+        line_segment_idx1 = j1//2
+        sub_field1 = j1%2
+
+        line_segment_idx2 = j2//2
+        sub_field2 = j2%2
+            
+        A = stroke_segments[line_segment_idx1][sub_field1]
+        B = stroke_segments[line_segment_idx2][sub_field2]
+        if line_segment_idx1 == line_segment_idx2: # this is a pen-down stroke.
+            for waypoint in lines[line_segment_idx1]:
+                robot_waypoints.append((*waypoint, paper_height(*waypoint)))
+        else:
+            robot_waypoints.append((*A, paper_height(*A)+pen_clearance))
+            robot_waypoints.append((*B, paper_height(*B)+pen_clearance))
+
+            pen_up_dists.append(euclidean_distance(A, B))
+
+    return pen_up_dists, robot_waypoints
+
+def plot_robot_waypoints(robot_waypoints, ax=None, **kwargs):
+    ax_was_none = ax is None
+    if ax is None:
+        fig, ax = plt.subplots()
+    for w1, w2 in zip(robot_waypoints[:-1], robot_waypoints[1:]):
+        if w1[2] == w2[2]:
+            c = 'grey' if w1[2] == paper_height(w1[0], w1[1]) else 'pink'
+            ax.plot([w1[0], w2[0]], [w1[1], w2[1]], linestyle='dashed', c=c)
+
+    if ax_was_none:
+        return fig, ax
+        
+
 #%%
+if __name__ == "__main__":
+    pen_clearance = 1.0
 
-lines = load_demo_lines()
-pen_down_dists = [stroke_dist(np.array(line)) for line in lines]
-pen_down_dist = sum(pen_down_dists)
+    lines = load_demo_lines()
+    pen_down_dists = [stroke_dist(np.array(line)) for line in lines]
+    pen_down_dist = sum(pen_down_dists)
 
-stroke_segments = lines_to_endpoints(lines)
+    stroke_segments = lines_to_endpoints(lines)
 
-fig, ax = plot_lines(lines)
-fig, ax = plot_lines(stroke_segments)
-cost_matrix = get_cost_matrix(stroke_segments)
-tour, total_distance = tsp_nearest_neighbor(cost_matrix)
+    cost_matrix = get_cost_matrix(stroke_segments)
+    tour, total_distance = tsp_nearest_neighbor(cost_matrix)
 
-# Print Results
-print("Tour:", tour)
-print("Total Distance:", total_distance)
+    pen_up_dists, robot_waypoints = tour_to_robot_waypoints(lines, tour)
+    pen_up_dist = sum(pen_up_dists)
 
-#%%
-# Plot optimal order
-tour = [int(d) for d in tour]
 
-# fig, ax = plot_lines(stroke_segments)
-fig, ax = plot_lines(lines, c='pink', linestyle='dashed')
-pen_up_dists = []
-# for i, (j1, j2) in enumerate(zip(tour[1:-2:2], tour[2::2])):
-for i, (j1, j2) in enumerate(zip(tour[:-1], tour[1:])):
+    # Print Results
+    print("Tour:", tour)
+    print("Total Distance:", total_distance)
+    print(f"Pen Down Travel Distance: {pen_down_dist:.2f}")
+    print(f"Pen Up Travel Distance: {pen_up_dist:.2f}")
 
-    line_segment_idx1 = j1//2
-    sub_field1 = j1%2
-
-    line_segment_idx2 = j2//2
-    sub_field2 = j2%2
-    A = stroke_segments[line_segment_idx1][sub_field1]
-    B = stroke_segments[line_segment_idx2][sub_field2]
-    if i%2 == 1:
-        pen_up_dists.append(euclidean_distance(A, B))
-        c = 'lightblue'
-        ax.plot([A[0], B[0]], [A[1], B[1]], linestyle="dashed", c=c)
-
-pen_up_dist = sum(pen_up_dists)
-
-print(f"Pen Down Travel Distance: {pen_down_dist:.2f}")
-print(f"Pen Up Travel Distance: {pen_up_dist:.2f}")
+    fig, ax = plot_robot_waypoints(robot_waypoints)
+    fig.savefig("output.png")
 
 # %%
