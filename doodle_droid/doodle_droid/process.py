@@ -29,23 +29,15 @@ class ImageProcessingNode(Node):
     def capture_image(self, request, response):
         cv_image = self.bridge.compressed_imgmsg_to_cv2(self.current_image, desired_encoding='passthrough')
         self.get_logger().info(f"cv image type: {type(cv_image)}")
-        # cv.imwrite(self.absolute_path, cv_image) #Convert numpy array tp jpg for image processing
-        # self.get_logger().info("Begin processing")
         lined_image = doodle_droid.linedraw.linedraw.sketch(cv_image)
         self.get_logger().info(f"Number of strokes: {len(lined_image)} ")
         self.get_logger().info("Finished processing")
-        self.get_logger().info(f"lined image type: {type(lined_image)}")
         
-        # lined_image = lined_image.tolist()
-        # json_data = json.dumps(lined_image)
-        # self.get_logger().info("Dumped Image")
-        # msg = String()
-        # msg.data = json_data
-        # self.get_logger().info("Filled out string message")
-        # self.processed_image_pub.publish(msg)
-        
-        # self.get_logger().info("Published lined image data")
-        
+        json_data = json.dumps(lined_image)
+        msg = String()
+        msg.data = json_data
+        self.processed_image_pub.publish(msg)
+                
         return response
 
 def main(args=None):
