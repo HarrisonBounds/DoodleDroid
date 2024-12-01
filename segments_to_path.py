@@ -11,6 +11,7 @@ from functools import reduce
 
 def euclidean_distance(p1, p2):
     return np.linalg.norm(np.array(p1) - np.array(p2))
+
 def load_demo_lines():
     fname = "doodle_droid/doodle_droid/images/lines.json"
     lines = json.load(open(fname))
@@ -21,13 +22,16 @@ def lines_to_endpoints(lines):
     return [(tuple(line[0]), tuple(line[-1])) for line in lines]
 
 
-def plot_lines(lines, ax=None):
+def plot_lines(lines, ax=None, **kwargs):
     ax_was_none = ax is None
     if ax is None:
         fig, ax = plt.subplots()
     for line in lines:
         x, y = zip(*line)
-        ax.plot(x, y, c='k')
+        if 'c' not in kwargs:
+            kwargs['c'] = 'k'
+
+        ax.plot(x, y, **kwargs)
 
     if ax_was_none:
         return fig, ax
@@ -115,7 +119,7 @@ print("Total Distance:", total_distance)
 tour = [int(d) for d in tour]
 
 # fig, ax = plot_lines(stroke_segments)
-fig, ax = plt.subplots()
+fig, ax = plot_lines(lines, c='pink', linestyle='dashed')
 pen_up_dists = []
 # for i, (j1, j2) in enumerate(zip(tour[1:-2:2], tour[2::2])):
 for i, (j1, j2) in enumerate(zip(tour[:-1], tour[1:])):
@@ -127,13 +131,10 @@ for i, (j1, j2) in enumerate(zip(tour[:-1], tour[1:])):
     sub_field2 = j2%2
     A = stroke_segments[line_segment_idx1][sub_field1]
     B = stroke_segments[line_segment_idx2][sub_field2]
-    if i%2 == 0:
-        c = 'pink'
-    else:
-        c = 'lightblue'
+    if i%2 == 1:
         pen_up_dists.append(euclidean_distance(A, B))
-    # plt.text(A[0], A[1], str(i), fontsize=12, color='red')
-    ax.plot([A[0], B[0]], [A[1], B[1]], linestyle="dashed", c=c)
+        c = 'lightblue'
+        ax.plot([A[0], B[0]], [A[1], B[1]], linestyle="dashed", c=c)
 
 pen_up_dist = sum(pen_up_dists)
 
