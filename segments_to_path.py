@@ -3,82 +3,68 @@ import numpy as np
 from scipy.optimize import linear_sum_assignment
 import matplotlib.pyplot as plt
 from random import random
+import numpy as np
+import json
+import matplotlib.pyplot as plt
+from functools import reduce
+
+
 def euclidean_distance(p1, p2):
     return np.linalg.norm(np.array(p1) - np.array(p2))
-#%%
-# List of line segments [(A, B), ...]
-def get_line_seg():
-    x,y = random(), random()
-    dx, dy = random(), random()
-    return ((x, y), (x+dx*0.1, y+dy*0.1))
-line_segments = [get_line_seg() for _ in range(100)]
+def load_demo_lines():
+    fname = "doodle_droid/doodle_droid/images/lines.json"
+    lines = json.load(open(fname))
+    lines = [[(x,-1 * y) for (x,y) in line] for line in lines]
+    return lines
+
+def lines_to_endpoints(lines):
+    return [(tuple(line[0]), tuple(line[-1])) for line in lines]
 
 
-#%%
-# Build cost matrix
-n = len(line_segments)
-cost_matrix = np.zeros((2*n, 2*n))
-for i, (A1, B1) in enumerate(line_segments):
-    a1_idx = 2*i
-    b1_idx = 2*i + 1
+def plot_lines(lines, ax=None):
+    ax_was_none = ax is None
+    if ax is None:
+        fig, ax = plt.subplots()
+    for line in lines:
+        x, y = zip(*line)
+        ax.plot(x, y, c='k')
 
-    #no self connection = inf cost
-    cost_matrix[a1_idx, a1_idx] = np.inf
-    cost_matrix[b1_idx, b1_idx] = np.inf
+    if ax_was_none:
+        return fig, ax
 
-    # cost_matrix[a1_idx, b1_idx] = 0
-    # cost_matrix[b1_idx, a1_idx] = 0
+def get_cost_matrix(stroke_segments):
+    n = len(stroke_segments)
+    cost_matrix = np.zeros((2*n, 2*n))
+    for i, (A1, B1) in enumerate(stroke_segments):
+        a1_idx = 2*i
+        b1_idx = 2*i + 1
 
-    for j, (A2, B2) in enumerate(line_segments):
-        a2_idx = 2*j
-        b2_idx = 2*j + 1
+        #no self connection = inf cost
+        cost_matrix[a1_idx, a1_idx] = np.inf
+        cost_matrix[b1_idx, b1_idx] = np.inf
 
-        pt_idxs, pts = [a1_idx, b1_idx, a2_idx, b2_idx], [A1, B1, A2, B2]
+        for j, (A2, B2) in enumerate(stroke_segments):
+            a2_idx = 2*j
+            b2_idx = 2*j + 1
 
-        for src_idx, src_pt in zip(pt_idxs, pts):
-            for dst_idx, dst_pt in zip(pt_idxs, pts):
-                cost =  euclidean_distance(src_pt, dst_pt)
-                if src_idx //2 == dst_idx // 2 and src_idx != dst_idx:
-                    cost = 0
-                if src_idx == dst_idx:
-                    continue
-                cost_matrix[src_idx, dst_idx] = cost
+            pt_idxs, pts = [a1_idx, b1_idx, a2_idx, b2_idx], [A1, B1, A2, B2]
 
-#%%
-# Solve the TSP (Hungarian Algorithm for Assignment Problem as a simplification)
-row_ind, col_ind = linear_sum_assignment(cost_matrix)
-optimal_order = col_ind
+            for src_idx, src_pt in zip(pt_idxs, pts):
+                for dst_idx, dst_pt in zip(pt_idxs, pts):
+                    cost =  euclidean_distance(src_pt, dst_pt)
+                    if src_idx //2 == dst_idx // 2 and src_idx != dst_idx:
+                        cost = 0
+                    if src_idx == dst_idx:
+                        continue
+                    cost_matrix[src_idx, dst_idx] = cost
+    return cost_matrix
 
-print("Optimal Drawing Order:", optimal_order)
-#%%
-# Plot line segments
-for A, B in line_segments:
-    plt.plot([A[0], B[0]], [A[1], B[1]], 'bo-')
+def tsp_hungarian(cost_matrix):
+    """Solve TSP using the Hungarian Algorithm"""
     
-# Plot optimal order
-for i, j in enumerate(optimal_order):
-    line_segment_idx = j//2
-    sub_field = j%2
-    A = line_segments[line_segment_idx][sub_field]
-
-    plt.text(A[0], A[1], str(i), fontsize=12, color='red')
-# %%
-import numpy as np
-import matplotlib.pyplot as plt
-
-# Generate random coordinates for cities
-# np.random.seed(42)
-# num_cities = 10
-# cities = np.random.rand(num_cities, 2) * 100  # Random points in a 100x100 grid
-
-# # Calculate distance matrix
-# def distance_matrix(cities):
-#     n = len(cities)
-#     dist_matrix = np.zeros((n, n))
-#     for i in range(n):
-#         for j in range(n):
-#             dist_matrix[i, j] = np.linalg.norm(cities[i] - cities[j])
-#     return dist_matrix
+    row_ind, col_ind = linear_sum_assignment(cost_matrix)
+    optimal_order = col_ind
+    return optimal_order
 
 # Nearest Neighbor TSP Solver
 def tsp_nearest_neighbor(dist_matrix):
@@ -104,30 +90,54 @@ def tsp_nearest_neighbor(dist_matrix):
 
     return tour, total_distance
 
-# Solve TSP
+def stroke_dist(stroke):
+    substroke_dists = np.linalg.norm(stroke[:-1] - stroke[1:], axis=1).sum()
+    return substroke_dists
+#%%
+
+lines = load_demo_lines()
+pen_down_dists = [stroke_dist(np.array(line)) for line in lines]
+pen_down_dist = sum(pen_down_dists)
+
+stroke_segments = lines_to_endpoints(lines)
+
+fig, ax = plot_lines(lines)
+fig, ax = plot_lines(stroke_segments)
+cost_matrix = get_cost_matrix(stroke_segments)
 tour, total_distance = tsp_nearest_neighbor(cost_matrix)
 
 # Print Results
 print("Tour:", tour)
 print("Total Distance:", total_distance)
 
-for A, B in line_segments:
-    plt.plot([A[0], B[0]], [A[1], B[1]], 'bo-')
-    
+#%%
 # Plot optimal order
 tour = [int(d) for d in tour]
 
+# fig, ax = plot_lines(stroke_segments)
+fig, ax = plt.subplots()
+pen_up_dists = []
+# for i, (j1, j2) in enumerate(zip(tour[1:-2:2], tour[2::2])):
 for i, (j1, j2) in enumerate(zip(tour[:-1], tour[1:])):
+
     line_segment_idx1 = j1//2
     sub_field1 = j1%2
 
     line_segment_idx2 = j2//2
     sub_field2 = j2%2
-    A = line_segments[line_segment_idx1][sub_field1]
-    B = line_segments[line_segment_idx2][sub_field2]
-
+    A = stroke_segments[line_segment_idx1][sub_field1]
+    B = stroke_segments[line_segment_idx2][sub_field2]
+    if i%2 == 0:
+        c = 'pink'
+    else:
+        c = 'lightblue'
+        pen_up_dists.append(euclidean_distance(A, B))
     # plt.text(A[0], A[1], str(i), fontsize=12, color='red')
-    plt.plot([A[0], B[0]], [A[1], B[1]], linestyle="dashed")
+    ax.plot([A[0], B[0]], [A[1], B[1]], linestyle="dashed", c=c)
 
+pen_up_dist = sum(pen_up_dists)
+
+print(f"Pen Down Travel Distance: {pen_down_dist:.2f}")
+print(f"Pen Up Travel Distance: {pen_up_dist:.2f}")
 
 # %%
