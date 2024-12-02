@@ -12,11 +12,11 @@ from doodle_droid.linedraw.util import *
 no_cv = False
 export_path = "/home/harrison-bounds/ws/ES_HW/doodle_droid/src/DoodleDroid/doodle_droid/doodle_droid/images/output.svg"
 draw_contours = True
-draw_hatch = True
+draw_hatch = False
 show_bitmap = False
 resolution = 1024
 hatch_size = 16
-contour_simplify = 2
+contour_simplify = 3
 
 try:
     import numpy as np
@@ -179,7 +179,7 @@ def sketch(path):
     #         print("The Input File wasn't found. Check Path")
     #         exit(0)
     #         pass
-    IM = Image.open(path)
+    IM = Image.fromarray(path)
     w,h = IM.size
 
     IM = IM.convert("L")
