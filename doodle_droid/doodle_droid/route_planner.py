@@ -97,3 +97,12 @@ class RoutePlannerNode(Node):
 
         return response
 
+def main():
+    rclpy.init()
+    node = RoutePlannerNode()
+    rclpy.spin(node)
+    rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
