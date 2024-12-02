@@ -1,7 +1,7 @@
 <launch>
     <arg name="pixel_format" default="yuyv" />
 
-    <arg name="rviz_config" default="rviz_config.rviz" description="path to local rviz config relative to share directory"/>
+    <arg name="rviz_config" default="config/rviz_config.rviz" description="path to local rviz config relative to share directory"/>
 
     
     <node
