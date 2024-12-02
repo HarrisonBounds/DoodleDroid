@@ -8,15 +8,21 @@ https://docs.google.com/document/d/1tCsjUFVBGqud-HylWmlEa1OkyHOy-n-hFuSvpV8IUJU/
   - Outputs the lines the robot should draw (along with their thicknesses)
 ### Calibrator: Yanni, Christian
   -  Determines the drawing surface plane by probing some points on the surface, similar to a 3D printer
-### Motion Planner: David, Han, Harrison
+### route Planner: David, Han, Harrison
   - Preliminary:
-    - [ ] use MoveIt to generate test drawing sequences (Han: Due Nov 25th)
+    - [x] use MoveIt to generate test drawing sequences (Han: Due Nov 25th; done nov 25th)
     - [x] Lines -> line route (David: Due Nov 25; Done Nov 22)
-  - [ ] Calibration -> querable height map (David: no deadline).
-  - [ ] Line route + height map + thicknesses -> XYZ route + thicknesses
-  - [ ] XYZ+ thickness route -> joint sequence
+    - [x] Calibration -> querable height map (David: Done Dec 1).
+    - [x] Line route + height map -> xyz path (David: Done Dec 1)
+  - [ ] integrate height calibration node into route planner
+    - [ ] calibration node -> route planner service or topic schema
+  - [ ] integrate image pipeline into route planner.
+    - [x] image -> route planner hand-tested; (David, Harrison; Done Dec 1)
+    - [ ] image node -> route planner Service schema
+  - [ ] (stretch-contigent) line thicknesses.
   - [ ] (stretch-contigent) thickness sequence -> target forces.
 ### Path Executor: Han, Christian, David
+  - [x] XYZ+  route -> joint sequence (Han: Done late Nov)
   -  Executes the robot joint trajectories
 ### Stretch
 #### Force Control (stretch): David
