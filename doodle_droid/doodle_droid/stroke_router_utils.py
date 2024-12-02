@@ -13,7 +13,7 @@ def euclidean_distance(p1, p2):
     return np.linalg.norm(np.array(p1) - np.array(p2))
 
 def load_demo_lines():
-    fname = "doodle_droid/doodle_droid/images/lines.json"
+    fname = "images/lines.json"
     lines = json.load(open(fname))
     lines = [[(x,-1 * y) for (x,y) in line] for line in lines]
     return lines
@@ -84,9 +84,6 @@ def stroke_dist(stroke):
     substroke_dists = np.linalg.norm(stroke[:-1] - stroke[1:], axis=1).sum()
     return substroke_dists
 
-def paper_height(x,y):
-    return 0.0
-
 def plot_lines(lines, ax=None, **kwargs):
     ax_was_none = ax is None
     if ax is None:
@@ -101,7 +98,8 @@ def plot_lines(lines, ax=None, **kwargs):
     if ax_was_none:
         return fig, ax
     
-def tour_to_robot_waypoints(lines, tour):
+def tour_to_robot_waypoints(lines, tour, paper_height_fn=None, pen_clearance=1.0):
+    assert paper_height_fn is not None, "paper_height_fn must be provided"
     pen_up_dists = []
     robot_waypoints = []
 
@@ -116,22 +114,27 @@ def tour_to_robot_waypoints(lines, tour):
         B = stroke_segments[line_segment_idx2][sub_field2]
         if line_segment_idx1 == line_segment_idx2: # this is a pen-down stroke.
             for waypoint in lines[line_segment_idx1]:
-                robot_waypoints.append((*waypoint, paper_height(*waypoint)))
+                robot_waypoints.append((*waypoint, paper_height_fn(*waypoint)))
         else:
-            robot_waypoints.append((*A, paper_height(*A)+pen_clearance))
-            robot_waypoints.append((*B, paper_height(*B)+pen_clearance))
+            robot_waypoints.append((*A, paper_height_fn(*A)+pen_clearance))
+            robot_waypoints.append((*B, paper_height_fn(*B)+pen_clearance))
 
             pen_up_dists.append(euclidean_distance(A, B))
 
     return pen_up_dists, robot_waypoints
 
-def plot_robot_waypoints(robot_waypoints, ax=None, **kwargs):
+def plot_robot_waypoints(robot_waypoints, ax=None, paper_height_fn=None, **kwargs):
+    if paper_height_fn is None: # default to flat paper
+        _, _, z = zip(*robot_waypoints)
+        mean_z = np.mean(z)
+        paper_height_fn = lambda x, y: mean_z
+
     ax_was_none = ax is None
     if ax is None:
         fig, ax = plt.subplots()
     for w1, w2 in zip(robot_waypoints[:-1], robot_waypoints[1:]):
         if w1[2] == w2[2]:
-            c = 'grey' if w1[2] == paper_height(w1[0], w1[1]) else 'pink'
+            c = 'grey' if w1[2] <= paper_height_fn(w1[0], w1[1]) else 'pink'
             ax.plot([w1[0], w2[0]], [w1[1], w2[1]], linestyle='dashed', c=c)
 
     if ax_was_none:
@@ -157,7 +160,6 @@ if __name__ == "__main__":
 
     # Print Results
     print("Tour:", tour)
-    print("Total Distance:", total_distance)
     print(f"Pen Down Travel Distance: {pen_down_dist:.2f}")
     print(f"Pen Up Travel Distance: {pen_up_dist:.2f}")
 
