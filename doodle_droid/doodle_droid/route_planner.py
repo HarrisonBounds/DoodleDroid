@@ -31,12 +31,17 @@ class RoutePlannerNode(Node):
         self._test_server = self.create_service(Empty, "_test_line", self._test_line)
 
         self.paper_height_model = PlanePaperHeightModel(0, 0, 1, -0.188) # default to flat paper
+
+        self._draw_waypoints = None
+        self._draw_server = self.create_service(Empty, "_draw", self._draw_callback)
+
+        self._brush_strokes_subscription = self.create_subscription(String, "/new_image", self._route_callback)
+
         return # OVERRIDE LACK OF FULL SERVICE SIGNATURES OF THE BELOW!
         raise NotImplementedError("coordinate msg type of a paper height model topic")
         self._paper_height_subscription = self.create_subscription(String, "paper_height", self._paper_height_callback, 10)
 
-        raise NotImplementedError("Implement a string based service, or change to something else.")
-        self._route_server = self.create_service(String, "brush_stokes", self._route_callback)
+        
     
     def _paper_height_callback(self, msg):
         self.get_logger().info(f"Received paper height model: {msg.data}")
@@ -66,7 +71,15 @@ class RoutePlannerNode(Node):
         await self._motion_planner.plan_c(start, execute=True) # go to starting waypoint
         await self._motion_planner.execute_waypoints(waypoints, 1.0) # traverse all waypoints
 
-    async def _route_callback(self, request, response):
+    async def _draw_callback(self, request, response):
+        if self._draw_waypoints is None:
+            self.get_logger().info("No waypoints to draw")
+            return response
+        
+        await self._execute_waypoints(self._draw_waypoints)
+        return response
+    
+    def _route_callback(self, request, response):
         lines = json.loads(request.data)
         pen_down_dists = [stroke_dist(np.array(line)) for line in lines]
         pen_down_dist = sum(pen_down_dists)
@@ -77,16 +90,17 @@ class RoutePlannerNode(Node):
         tour, _ = tsp_nearest_neighbor(cost_matrix)
 
         pen_up_dists, robot_xyz_waypoints = tour_to_robot_waypoints(lines, tour, paper_height_fn=self.paper_height_model.get_paper_height, pen_clearance=1.0)
-        pen_up_dist = sum(pen_up_dists)
+        self._draw_waypoints = robot_xyz_waypoints
 
+        pen_up_dist = sum(pen_up_dists)
         total_distance = pen_down_dist + pen_up_dist
         
         self.get_logger().info(f"Total distance: {total_distance}")
         self.get_logger().info(f"Pen down distance: {pen_down_dist} ({100 * pen_down_dist/total_distance:.2f}% of total)")
         self.get_logger().info(f"Pen up distance: {pen_up_dist} ({100 * pen_up_dist/total_distance:.2f}% of total)")
-
-        await self._execute_waypoints(robot_xyz_waypoints)
-        
+    
+        return response
+    
     async def _test_line(self, request, response):
         x = 0.25
         y = 0.0
