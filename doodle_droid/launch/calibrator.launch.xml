@@ -3,12 +3,15 @@
 
     <arg name="rviz_config" default="config/rviz_config.rviz" description="path to local rviz config relative to share directory"/>
 
+    <arg name="video_device" default="/dev/video0" description="video device to read from"/>
+
     
     <node
         pkg="usb_cam"
         exec="usb_cam_node_exe"
         output="screen">
         <param name="pixel_format" value="$(var pixel_format)" />
+        <param name="video_device" value="$(var video_device)"/>
 
     </node>
 
