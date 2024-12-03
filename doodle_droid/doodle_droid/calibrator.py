@@ -15,7 +15,7 @@ import numpy as np
 from apriltag import apriltag
 from scipy.spatial.transform import Rotation as R
 
-from geometry_msgs.msg import Pose, TransformStamped
+from geometry_msgs.msg import Pose, TransformStamped, Vector3
 
 from tf2_ros import TransformBroadcaster
 from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
@@ -40,15 +40,16 @@ class Calibrator(Node):
         """Run initializer."""
         super().__init__('calibrator')
 
-        self.frequency = 100.0
+        self.frequency = 1000.0
 
         # Timers
         self.create_timer(1/self.frequency, self.timer_callback)
 
         self.surface_publisher = self.create_publisher(Marker, 'surface_marker', 10)
-
+        self.drawing_dims_publisher = self.create_publisher(Vector3, "drawing_dims", 10)
         self.cam_sub = self.create_subscription(CompressedImage, '/image_raw/compressed', self.get_image_callback, 10)
 
+        self.broadcaster = TransformBroadcaster(self)
 
         self.bridge = CvBridge()
         self.current_image = None
@@ -59,9 +60,9 @@ class Calibrator(Node):
         self.detector = apriltag("tagStandard41h12")
  
         self.fx = 600   # dummy parameters for now
-        self.fy = 600 
-        self.cx = 320  
-        self.cy = 240  
+        self.fy = 600
+        self.cx = 320
+        self.cy = 240
         self.tagsize = 0.1016  # using 4 inch apriltags
 
         self.camera_matrix = np.array([[self.fx, 0, self.cx],
@@ -71,9 +72,9 @@ class Calibrator(Node):
         self.static_broadcaster = StaticTransformBroadcaster(self)
         world_camera_tf = TransformStamped()
         world_camera_tf.header.stamp = self.get_clock().now().to_msg()
-        world_camera_tf.header.frame_id = 'world'
+        world_camera_tf.header.frame_id = 'end_effector'
         world_camera_tf.child_frame_id = 'camera'
-        world_camera_tf.transform.translation.x = 0.0
+        world_camera_tf.transform.translation.x = 0.0 # change to match camera mounting
         world_camera_tf.transform.translation.y = 0.0
         world_camera_tf.transform.translation.z = 0.0
         self.static_broadcaster.sendTransform(world_camera_tf)
@@ -133,8 +134,6 @@ class Calibrator(Node):
 
                     surface = self.create_marker(detection_num, 'surface', 'camera', pose, [self.tagsize, self.tagsize, 0.1], [1.0, 1.0, 1.0], 0.5)
                     self.surface_publisher.publish(surface)
-                    pt = self.create_marker(detection_num, 'pt', 'camera', pose, [0.03, 0.03, 0.03], [1.0, 0.0, 0.0], 1.0)
-                    self.surface_publisher.publish(pt)
 
                     detection_num += 1
 
@@ -158,6 +157,25 @@ class Calibrator(Node):
 )                        # orders centers as bot left, bot right, top right, top left
                     width = distance(sorted_positions[0], sorted_positions[1])
                     height = distance(sorted_positions[0], sorted_positions[3])
+
+                    dims = Vector3()
+                    dims.x = width
+                    dims.y = height
+                    self.drawing_dims_publisher.publish(dims)
+
+                    cam_surface = TransformStamped()
+                    cam_surface.header.stamp = self.get_clock().now().to_msg()
+                    cam_surface.header.frame_id = 'camera'
+                    cam_surface.child_frame_id = 'surface'
+                    cam_surface.transform.translation.x = reshaped_vector[0]
+                    cam_surface.transform.translation.y = reshaped_vector[1]
+                    cam_surface.transform.translation.z = reshaped_vector[2]
+                    cam_surface.transform.rotation.x = quaternion[0]
+                    cam_surface.transform.rotation.y = quaternion[1]
+                    cam_surface.transform.rotation.z = quaternion[2]
+                    cam_surface.transform.rotation.w = quaternion[3]
+
+                    self.broadcaster.sendTransform(cam_surface)
 
                     surface = self.create_marker(999, 'surface', 'camera', self.surface_pose, [height-self.tagsize/2, width-self.tagsize/2, 0.1], [0.0, 1.0, 1.0], 1.0)
                     self.surface_publisher.publish(surface)
