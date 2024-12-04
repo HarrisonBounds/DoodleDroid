@@ -64,7 +64,11 @@ class ImageProcessingNode(Node):
                 # Normalize each component of the tuple separately
                 normalized_tuple = tuple((component - min_val) / (max_val - min_val) for component in value)
                 normalized_sublist.append(normalized_tuple)
-            normalized_data.append(normalized_sublist)
+
+                # Apply the normalization formula
+                normalized_value = (value - min_val) / (max_val - min_val)
+                normalized_sublist.append(normalized_value)
+
             
         self.get_logger().info(f"Normalized list to publish: {normalized_data}")
         
