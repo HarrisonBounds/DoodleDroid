@@ -27,7 +27,7 @@ class ImageProcessingNode(Node):
         self.pkg_share = get_package_share_directory(self.pkg_name)
         self.path = f"{self.pkg_share}/doodle_droid/images/my_smiley.jpeg"
         self.bridge = CvBridge()
-        self.from_file = True
+        self.from_file = False
         
     def get_image_callback(self, msg):
         self.current_image = msg
