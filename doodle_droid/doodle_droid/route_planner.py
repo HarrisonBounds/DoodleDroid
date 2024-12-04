@@ -35,7 +35,7 @@ class RoutePlannerNode(Node):
         self._draw_waypoints = None
         self._draw_server = self.create_service(Empty, "_draw", self._draw_callback)
 
-        self._brush_strokes_subscription = self.create_subscription(String, "/new_image", self._route_callback)
+        self._brush_strokes_subscription = self.create_subscription(String, "/new_image", self._route_callback,10)
 
         return # OVERRIDE LACK OF FULL SERVICE SIGNATURES OF THE BELOW!
         raise NotImplementedError("coordinate msg type of a paper height model topic")
