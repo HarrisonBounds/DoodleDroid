@@ -1,8 +1,8 @@
 from functools import partial
 import rclpy
 from rclpy.node import Node
-from moveit2_api.robot_state import RobotState
-from moveit2_api.motion_planner import MotionPlanner
+# from moveit2_api.robot_state import RobotState
+from doodle_droid.motion_planner import MotionPlanner
 from geometry_msgs.msg import PoseStamped, PoseArray
 from shape_msgs.msg import SolidPrimitive
 from sensor_msgs.msg import JointState
@@ -14,7 +14,7 @@ import time
 class TestNode(Node):
     def __init__(self):
         super().__init__('test_node')
-        self._robot_state = RobotState(self)
+        # self._robot_state = RobotState(self)
         self._motion_planner = MotionPlanner(self)
 
         self._test_server = self.create_service(Empty, "test", self._test_callback)
@@ -47,7 +47,7 @@ class TestNode(Node):
         # else:
         #     self.get_logger().info("Failed to get end effector pose.")
         
-        z = 0.188
+        z = 0.3
         start1 = Pose()
         start1.position = Point(x=0.25, y=0.05, z=z)
         start1.orientation = Quaternion(x=0.9238792,

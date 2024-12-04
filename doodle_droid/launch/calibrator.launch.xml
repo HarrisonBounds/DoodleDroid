@@ -17,5 +17,5 @@
 
     <node pkg='doodle_droid' exec='calibrator'/>
 
-    <node pkg="rviz2" exec="rviz2"  args="-d $(find-pkg-share doodle_droid)/$(var rviz_config)"/>
+    <!-- <node pkg="rviz2" exec="rviz2"  args="-d $(find-pkg-share doodle_droid)/$(var rviz_config)"/> -->
 </launch>
