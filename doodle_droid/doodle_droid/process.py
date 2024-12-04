@@ -37,20 +37,43 @@ class ImageProcessingNode(Node):
             cv_image = self.bridge.compressed_imgmsg_to_cv2(self.current_image, desired_encoding='passthrough')
             self.get_logger().info(f"cv image type: {type(cv_image)}")
             lined_image = doodle_droid.linedraw.linedraw.sketch(cv_image)
+            
             self.get_logger().info(f"Number of strokes: {len(lined_image)} ")
             self.get_logger().info("Finished processing")
             
-            json_data = json.dumps(lined_image)
-            msg = String()
-            msg.data = json_data
-            self.processed_image_pub.publish(msg)
         else:
             image = cv.imread(self.absolute_path)
             image_array = np.array(image)
             lined_image = doodle_droid.linedraw.linedraw.sketch(image_array)
             self.get_logger().info(f"Number of strokes: {len(lined_image)} ")
-
-                
+            
+            self.get_logger().info(f"Number of strokes: {len(lined_image)} ")
+            self.get_logger().info("Finished processing")
+            
+        all_values = []
+        for sublist in lined_image:
+            all_values.extend(sublist)
+            
+        min_val = min(all_values)
+        max_val = max(all_values)
+            
+        normalized_data = []
+        for sublist in lined_image:
+            normalized_sublist = []
+            for value in sublist:
+                # Apply the normalization formula
+                normalized_value = (value - min_val) / (max_val - min_val)
+                normalized_sublist.append(normalized_value)
+            normalized_data.append(normalized_sublist)
+            
+        self.get_logger().info(f"Normalized list to publish: {normalized_data}")
+        
+        
+        json_data = json.dumps(normalized_data)
+        msg = String()
+        msg.data = json_data
+        self.processed_image_pub.publish(msg)
+              
         return response
 
 def main(args=None):
