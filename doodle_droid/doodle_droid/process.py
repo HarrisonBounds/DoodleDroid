@@ -50,21 +50,25 @@ class ImageProcessingNode(Node):
             self.get_logger().info(f"Number of strokes: {len(lined_image)} ")
             self.get_logger().info("Finished processing")
             
-        all_values = []
-        for sublist in lined_image:
-            all_values.extend(sublist)
-            
+        all_values = [value for sublist in lined_image for tuple_item in sublist for value in tuple_item]
+
+        # Get min and max for each component
         min_val = min(all_values)
         max_val = max(all_values)
-            
+
+        # Step 2: Normalize each tuple
         normalized_data = []
         for sublist in lined_image:
             normalized_sublist = []
             for value in sublist:
+                # Normalize each component of the tuple separately
+                normalized_tuple = tuple((component - min_val) / (max_val - min_val) for component in value)
+                normalized_sublist.append(normalized_tuple)
+
                 # Apply the normalization formula
                 normalized_value = (value - min_val) / (max_val - min_val)
                 normalized_sublist.append(normalized_value)
-            normalized_data.append(normalized_sublist)
+
             
         self.get_logger().info(f"Normalized list to publish: {normalized_data}")
         
