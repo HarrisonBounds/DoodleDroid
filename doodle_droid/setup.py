@@ -42,7 +42,8 @@ setup(
     entry_points={
         'console_scripts': [
             'image_processing_node = doodle_droid.process:main',
-            'calibrator = doodle_droid.calibrator:main'
+            'calibrator = doodle_droid.calibrator:main',
+            'test_node = doodle_droid.test_node:main'
         ],
     },
 )

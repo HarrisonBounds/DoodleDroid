@@ -68,7 +68,7 @@ class Calibrator(Node):
         self.cx = 642.9287109375
         self.cy = 362.6142883300781
         # self.tagsize = 0.1016  # using 4 inch apriltags
-        self.tagsize = 0.0635  # using 2.5 inch apriltags
+        self.tagsize = 0.044  # using 2.5 inch apriltags
 
         self.camera_matrix = np.array([[self.fx, 0, self.cx],
                                   [0, self.fy, self.cy],
@@ -77,7 +77,7 @@ class Calibrator(Node):
         self.static_broadcaster = StaticTransformBroadcaster(self)
         world_camera_tf = TransformStamped()
         world_camera_tf.header.stamp = self.get_clock().now().to_msg()
-        world_camera_tf.header.frame_id = 'end_effector'
+        world_camera_tf.header.frame_id = 'fer_hand'
         world_camera_tf.child_frame_id = 'camera'
         world_camera_tf.transform.translation.x = 0.0 # change to match camera mounting
         world_camera_tf.transform.translation.y = 0.0
@@ -101,99 +101,99 @@ class Calibrator(Node):
         """
         # self.get_logger().info("not in position")
 
-        if self.in_position:
+        # if self.in_position:
             # self.get_logger().info("IN POSITION")
-            if self.current_image is not None:
-                cv_image = self.bridge.compressed_imgmsg_to_cv2(self.current_image, desired_encoding='passthrough')
-                gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
-                detections = self.detector.detect(gray)
-                
-                detection_num = 0
-                detected_orientations = []
-                detected_positions = []
-                if len(detections)>0: # only look at first detection for now
-                    for detection in detections:
-                        corners = np.array(detection['lb-rb-rt-lt'], dtype=np.float32)
-                        # centers.append(detection['center'])
-                        
-                        object_points = np.array([
-                            [-self.tagsize / 2, -self.tagsize / 2, 0],
-                            [self.tagsize / 2, -self.tagsize / 2, 0],
-                            [self.tagsize / 2, self.tagsize / 2, 0],
-                            [-self.tagsize / 2, self.tagsize / 2, 0]
-                        ], dtype=np.float32)
-
-                        _, rotation_vector, translation_vector = cv2.solvePnP(object_points, corners, self.camera_matrix, None)
-
-                        rotation_matrix, _ = cv2.Rodrigues(rotation_vector)
-
-                        r = R.from_matrix(rotation_matrix)
-                        quaternion = r.as_quat() 
-
-                        pose = Pose()
-
-                        reshaped_vector = translation_vector.reshape(3,)
-                        pose.position.x = reshaped_vector[0]
-                        pose.position.y = reshaped_vector[1]
-                        pose.position.z = reshaped_vector[2]
-
-                        pose.orientation.x = quaternion[0]
-                        pose.orientation.y = quaternion[1]
-                        pose.orientation.z = quaternion[2]
-                        pose.orientation.w = quaternion[3]
-
-                        detected_orientations.append(quaternion)
-                        detected_positions.append(reshaped_vector)
-
-                        self.surface_pose = pose
-
-                        surface = self.create_marker(detection_num, 'surface', 'camera', pose, [self.tagsize, self.tagsize, 0.1], [1.0, 1.0, 1.0], 0.5)
-                        self.surface_publisher.publish(surface)
-
-                        detection_num += 1
-
-                    avg_position = np.mean(detected_positions, axis=0) # calculate average position of four april tags (hopefully more accurate)
-                    self.surface_pose.position.x = avg_position[0]
-                    self.surface_pose.position.y = avg_position[1]
-                    self.surface_pose.position.z = avg_position[2]
+        if self.current_image is not None:
+            cv_image = self.bridge.compressed_imgmsg_to_cv2(self.current_image, desired_encoding='passthrough')
+            gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
+            detections = self.detector.detect(gray)
+            
+            detection_num = 0
+            detected_orientations = []
+            detected_positions = []
+            if len(detections)>0: # only look at first detection for now
+                for detection in detections:
+                    corners = np.array(detection['lb-rb-rt-lt'], dtype=np.float32)
+                    # centers.append(detection['center'])
                     
+                    object_points = np.array([
+                        [-self.tagsize / 2, -self.tagsize / 2, 0],
+                        [self.tagsize / 2, -self.tagsize / 2, 0],
+                        [self.tagsize / 2, self.tagsize / 2, 0],
+                        [-self.tagsize / 2, self.tagsize / 2, 0]
+                    ], dtype=np.float32)
 
-                    avg_orientation = np.mean(detected_orientations, axis=0) # calculate average orientation of four april tags (hopefully more accurate)
-                    avg_orientation /= np.linalg.norm(avg_orientation)
-                    self.surface_pose.orientation.x = avg_orientation[0]
-                    self.surface_pose.orientation.y = avg_orientation[1]
-                    self.surface_pose.orientation.z = avg_orientation[2]
-                    self.surface_pose.orientation.w = avg_orientation[3]
+                    _, rotation_vector, translation_vector = cv2.solvePnP(object_points, corners, self.camera_matrix, None)
 
-                    if len(detected_positions) >= 4:
-                        sorted_positions = sorted(
-                            detected_positions,
-                            key=lambda pt: angle_from_centroid(pt, avg_position)
-    )                        # orders centers as bot left, bot right, top right, top left
-                        width = distance(sorted_positions[0], sorted_positions[1])
-                        height = distance(sorted_positions[0], sorted_positions[3])
+                    rotation_matrix, _ = cv2.Rodrigues(rotation_vector)
 
-                        dims = Vector3()
-                        dims.x = width
-                        dims.y = height
-                        self.drawing_dims_publisher.publish(dims)
+                    r = R.from_matrix(rotation_matrix)
+                    quaternion = r.as_quat() 
 
-                        cam_surface = TransformStamped()
-                        cam_surface.header.stamp = self.get_clock().now().to_msg()
-                        cam_surface.header.frame_id = 'camera'
-                        cam_surface.child_frame_id = 'surface'
-                        cam_surface.transform.translation.x = reshaped_vector[0]
-                        cam_surface.transform.translation.y = reshaped_vector[1]
-                        cam_surface.transform.translation.z = reshaped_vector[2]
-                        cam_surface.transform.rotation.x = quaternion[0]
-                        cam_surface.transform.rotation.y = quaternion[1]
-                        cam_surface.transform.rotation.z = quaternion[2]
-                        cam_surface.transform.rotation.w = quaternion[3]
+                    pose = Pose()
 
-                        self.broadcaster.sendTransform(cam_surface)
+                    reshaped_vector = translation_vector.reshape(3,)
+                    pose.position.x = reshaped_vector[0]
+                    pose.position.y = reshaped_vector[1]
+                    pose.position.z = reshaped_vector[2]
 
-                        surface = self.create_marker(999, 'surface', 'camera', self.surface_pose, [height-self.tagsize/2, width-self.tagsize/2, 0.1], [0.0, 1.0, 1.0], 1.0)
-                        self.surface_publisher.publish(surface)
+                    pose.orientation.x = quaternion[0]
+                    pose.orientation.y = quaternion[1]
+                    pose.orientation.z = quaternion[2]
+                    pose.orientation.w = quaternion[3]
+
+                    detected_orientations.append(quaternion)
+                    detected_positions.append(reshaped_vector)
+
+                    self.surface_pose = pose
+
+                    surface = self.create_marker(detection_num, 'surface', 'camera', pose, [self.tagsize, self.tagsize, 0.1], [1.0, 1.0, 1.0], 0.5)
+                    self.surface_publisher.publish(surface)
+
+                    detection_num += 1
+
+                avg_position = np.mean(detected_positions, axis=0) # calculate average position of four april tags (hopefully more accurate)
+                self.surface_pose.position.x = avg_position[0]
+                self.surface_pose.position.y = avg_position[1]
+                self.surface_pose.position.z = avg_position[2]
+                
+
+                avg_orientation = np.mean(detected_orientations, axis=0) # calculate average orientation of four april tags (hopefully more accurate)
+                avg_orientation /= np.linalg.norm(avg_orientation)
+                self.surface_pose.orientation.x = avg_orientation[0]
+                self.surface_pose.orientation.y = avg_orientation[1]
+                self.surface_pose.orientation.z = avg_orientation[2]
+                self.surface_pose.orientation.w = avg_orientation[3]
+
+                if len(detected_positions) >= 4:
+                    sorted_positions = sorted(
+                        detected_positions,
+                        key=lambda pt: angle_from_centroid(pt, avg_position)
+)                        # orders centers as bot left, bot right, top right, top left
+                    width = distance(sorted_positions[0], sorted_positions[1])
+                    height = distance(sorted_positions[0], sorted_positions[3])
+
+                    dims = Vector3()
+                    dims.x = width
+                    dims.y = height
+                    self.drawing_dims_publisher.publish(dims)
+
+                    cam_surface = TransformStamped()
+                    cam_surface.header.stamp = self.get_clock().now().to_msg()
+                    cam_surface.header.frame_id = 'camera'
+                    cam_surface.child_frame_id = 'surface'
+                    cam_surface.transform.translation.x = avg_position[0]
+                    cam_surface.transform.translation.y = avg_position[1]
+                    cam_surface.transform.translation.z = avg_position[2]
+                    cam_surface.transform.rotation.x = avg_orientation[0]
+                    cam_surface.transform.rotation.y = avg_orientation[1]
+                    cam_surface.transform.rotation.z = avg_orientation[2]
+                    cam_surface.transform.rotation.w = avg_orientation[3]
+
+                    self.broadcaster.sendTransform(cam_surface)
+
+                    surface = self.create_marker(999, 'surface', 'camera', self.surface_pose, [height-self.tagsize/2, width-self.tagsize/2, 0.1], [0.0, 1.0, 1.0], 1.0)
+                    self.surface_publisher.publish(surface)
     
     async def calibrate_callback(self,request, response):
         # z = 0.188
