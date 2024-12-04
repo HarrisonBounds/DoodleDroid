@@ -205,11 +205,13 @@ class Calibrator(Node):
                                         w=0.0007357)
         result, status = await self.motion_planner.plan_p(start1.position,start1.orientation,execute=True)
 
-        while status != GoalStatus.STATUS_SUCCEEDED:
-            self.get_logger().info('planning step 1')
-            # self.motion_planner.print_status(status)
-            self.in_position = True
-            pass
+        self.motion_planner.print_status(status)
+        # while status != GoalStatus.STATUS_SUCCEEDED:
+        #     self.get_logger().info('planning step 1')
+        #     # self.motion_planner.print_status(status)
+        #     pass
+        self.in_position = True
+
 
         return response
 
