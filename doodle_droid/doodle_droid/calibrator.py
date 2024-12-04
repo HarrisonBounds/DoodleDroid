@@ -67,7 +67,8 @@ class Calibrator(Node):
         self.fy = 924.5787963867188
         self.cx = 642.9287109375
         self.cy = 362.6142883300781
-        self.tagsize = 0.1016  # using 4 inch apriltags
+        # self.tagsize = 0.1016  # using 4 inch apriltags
+        self.tagsize = 0.0635  # using 2.5 inch apriltags
 
         self.camera_matrix = np.array([[self.fx, 0, self.cx],
                                   [0, self.fy, self.cy],
