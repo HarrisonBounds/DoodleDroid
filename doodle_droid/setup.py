@@ -43,7 +43,8 @@ setup(
         'console_scripts': [
             'image_processing_node = doodle_droid.process:main',
             'calibrator = doodle_droid.calibrator:main',
-            'test_node = doodle_droid.test_node:main'
+            'test_node = doodle_droid.test_node:main',
+            'route_planner = doodle_droid.route_planner:main'
         ],
     },
 )
