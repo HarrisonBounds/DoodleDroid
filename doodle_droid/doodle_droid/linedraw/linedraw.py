@@ -9,8 +9,12 @@ from doodle_droid.linedraw.strokesort import *
 import doodle_droid.linedraw.perlin
 from doodle_droid.linedraw.util import *
 
+from ament_index_python.packages import get_package_share_directory
+
+pkg_name = "doodle_droid"
+pkg_share = get_package_share_directory(pkg_name)
+export_path = f"{pkg_share}/images/output.svg"
 no_cv = False
-export_path = "/home/harrison-bounds/ws/ES_HW/doodle_droid/src/DoodleDroid/doodle_droid/doodle_droid/images/output.svg"
 draw_contours = True
 draw_hatch = False
 show_bitmap = False

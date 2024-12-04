@@ -12,6 +12,7 @@ from doodle_droid.linedraw.linedraw import *
 from std_msgs.msg import String
 import json
 from ament_index_python.packages import get_package_share_directory
+import rospkg
 
 
 class ImageProcessingNode(Node):
@@ -25,9 +26,13 @@ class ImageProcessingNode(Node):
         self.absolute_path = '/home/harrison-bounds/ws/ES_HW/doodle_droid/src/DoodleDroid/doodle_droid/doodle_droid/images/my_smiley.jpeg'
         self.pkg_name = "doodle_droid"
         self.pkg_share = get_package_share_directory(self.pkg_name)
-        self.path = f"{self.pkg_share}/doodle_droid/images/my_smiley.jpeg"
+        
+        self.path = f"{self.pkg_share}/images/my_smiley.jpeg"
         self.bridge = CvBridge()
         self.from_file = False
+        
+        self.get_logger().info(f"SELF.PS: {self.pkg_share}")
+        self.get_logger().info(f"SELF.PATH: {self.path}")
         
     def get_image_callback(self, msg):
         self.current_image = msg
@@ -42,7 +47,7 @@ class ImageProcessingNode(Node):
             self.get_logger().info("Finished processing")
             
         else:
-            image = cv.imread(self.absolute_path)
+            image = cv.imread(self.path)
             image_array = np.array(image)
             lined_image = doodle_droid.linedraw.linedraw.sketch(image_array)
             self.get_logger().info(f"Number of strokes: {len(lined_image)} ")
@@ -77,6 +82,8 @@ class ImageProcessingNode(Node):
         msg = String()
         msg.data = json_data
         self.processed_image_pub.publish(msg)
+        
+        self.get_logger().info(f"DONE PUBLISHING")
               
         return response
 
