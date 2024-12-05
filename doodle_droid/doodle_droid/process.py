@@ -29,7 +29,7 @@ class ImageProcessingNode(Node):
         
         self.path = f"{self.pkg_share}/images/my_smiley.jpeg"
         self.bridge = CvBridge()
-        self.from_file = False
+        self.from_file = True
         
         self.get_logger().info(f"SELF.PS: {self.pkg_share}")
         self.get_logger().info(f"SELF.PATH: {self.path}")
@@ -55,6 +55,8 @@ class ImageProcessingNode(Node):
             self.get_logger().info(f"Number of strokes: {len(lined_image)} ")
             self.get_logger().info("Finished processing")
             
+        self.get_logger().info(f"lined image: {lined_image}")
+            
         all_values = [value for sublist in lined_image for tuple_item in sublist for value in tuple_item]
 
         # Get min and max for each component
@@ -69,14 +71,10 @@ class ImageProcessingNode(Node):
                 # Normalize each component of the tuple separately
                 normalized_tuple = tuple((component - min_val) / (max_val - min_val) for component in value)
                 normalized_sublist.append(normalized_tuple)
+                
+            normalized_data.append(normalized_sublist)
 
-                # Apply the normalization formula
-                normalized_value = (value - min_val) / (max_val - min_val)
-                normalized_sublist.append(normalized_value)
-
-            
         self.get_logger().info(f"Normalized list to publish: {normalized_data}")
-        
         
         json_data = json.dumps(normalized_data)
         msg = String()
