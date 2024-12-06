@@ -72,14 +72,14 @@ class Calibrator(Node):
         world_camera_tf.header.stamp = self.get_clock().now().to_msg()
         world_camera_tf.header.frame_id = 'fer_hand'
         world_camera_tf.child_frame_id = 'camera_color_optical_frame'
-        world_camera_tf.transform.translation.x = 0.3 # change to match camera mounting
-        world_camera_tf.transform.translation.y = -0.1
-        world_camera_tf.transform.translation.z = 0.0
+        world_camera_tf.transform.translation.x = 0.045466 # change to match camera mounting
+        world_camera_tf.transform.translation.y = 0.0
+        world_camera_tf.transform.translation.z = 0.01
 
-        world_camera_tf.transform.rotation.x = 0.0 # change to match camera mounting
-        world_camera_tf.transform.rotation.y = 0.7071045
-        world_camera_tf.transform.rotation.z = 0.0
-        world_camera_tf.transform.rotation.w = 0.7071045
+        # world_camera_tf.transform.rotation.x = 0.0 # change to match camera mounting
+        # world_camera_tf.transform.rotation.y = 0.7071045
+        # world_camera_tf.transform.rotation.z = 0.0
+        # world_camera_tf.transform.rotation.w = 0.7071045
         self.static_broadcaster.sendTransform(world_camera_tf)
         
 
