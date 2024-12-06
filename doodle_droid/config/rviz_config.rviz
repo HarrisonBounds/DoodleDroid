@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /Image1
       Splitter Ratio: 0.5
     Tree Height: 348
   - Class: rviz_common/Selection
@@ -59,13 +60,13 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /image_raw
+        Value: /camera/camera/color/image_raw
       Value: true
     - Class: rviz_default_plugins/Marker
       Enabled: true
       Name: Marker
       Namespaces:
-        surface: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -74,10 +75,48 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /surface_marker
       Value: true
+    - Class: rviz_default_plugins/TF
+      Enabled: true
+      Filter (blacklist): ""
+      Filter (whitelist): ""
+      Frame Timeout: 15
+      Frames:
+        All Enabled: true
+        camera_color_frame:
+          Value: true
+        camera_color_optical_frame:
+          Value: true
+        camera_depth_frame:
+          Value: true
+        camera_depth_optical_frame:
+          Value: true
+        camera_link:
+          Value: true
+        fer_hand:
+          Value: true
+        tag36h11:0:
+          Value: true
+      Marker Scale: 1
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: false
+      Tree:
+        fer_hand:
+          camera_link:
+            camera_color_frame:
+              camera_color_optical_frame:
+                tag36h11:0:
+                  {}
+            camera_depth_frame:
+              camera_depth_optical_frame:
+                {}
+      Update Interval: 0
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: camera
+    Fixed Frame: camera_link
     Frame Rate: 30
   Name: root
   Tools:
@@ -120,7 +159,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 15.554559707641602
+      Distance: 9.327997207641602
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1

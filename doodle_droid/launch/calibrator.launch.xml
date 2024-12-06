@@ -1,21 +1,22 @@
 <launch>
-    <arg name="pixel_format" default="yuyv" />
 
     <arg name="rviz_config" default="config/rviz_config.rviz" description="path to local rviz config relative to share directory"/>
 
-    <arg name="video_device" default="/dev/video0" description="video device to read from"/>
+    <arg name="apriltag_params" default="config/apriltag_params.yaml" description="path to AprilTag parameters relative to share directory" />
 
-    
+    <include file="$(find-pkg-share realsense2_camera)/launch/rs_launch.py"/>   
+
     <node
-        pkg="usb_cam"
-        exec="usb_cam_node_exe"
+        pkg="apriltag_ros"
+        exec="apriltag_node"
         output="screen">
-        <param name="pixel_format" value="$(var pixel_format)" />
-        <param name="video_device" value="$(var video_device)"/>
-
+        <remap from="image_rect" to="/camera/camera/color/image_raw" />
+        <remap from="camera_info" to="/camera/camera/color/camera_info" />
+        <param name="params_file" value="$(find-pkg-share doodle_droid)/$(var apriltag_params)" />
     </node>
+
 
     <node pkg='doodle_droid' exec='calibrator'/>
 
-    <!-- <node pkg="rviz2" exec="rviz2"  args="-d $(find-pkg-share doodle_droid)/$(var rviz_config)"/> -->
+    <node pkg="rviz2" exec="rviz2"  args="-d $(find-pkg-share doodle_droid)/$(var rviz_config)"/>
 </launch>
