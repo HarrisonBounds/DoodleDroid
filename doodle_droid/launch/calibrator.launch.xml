@@ -9,11 +9,14 @@
     <node
         pkg="apriltag_ros"
         exec="apriltag_node"
-        output="screen">
+        output="screen"
+        name="apriltag_node">
         <remap from="image_rect" to="/camera/camera/color/image_raw" />
         <remap from="camera_info" to="/camera/camera/color/camera_info" />
-        <param name="params_file" value="$(find-pkg-share doodle_droid)/$(var apriltag_params)" />
+        <param from="$(find-pkg-share doodle_droid)/$(var apriltag_params)" />
     </node>
+
+    <!-- <include file="$(find-pkg-share doodle_droid)/launch/aruco.launch.py"/>    -->
 
 
     <node pkg='doodle_droid' exec='calibrator'/>
