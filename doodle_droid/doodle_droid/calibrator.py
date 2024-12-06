@@ -22,6 +22,7 @@ from tf2_ros import TransformBroadcaster
 from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
+# from tf2_msgs.
 
 from doodle_droid.motion_planner import MotionPlanner
 from std_srvs.srv import Empty
@@ -54,6 +55,7 @@ class Calibrator(Node):
 
         self.surface_publisher = self.create_publisher(Marker, 'surface_marker', 10)
         self.drawing_dims_publisher = self.create_publisher(Vector3, "drawing_dims", 10)
+        self.surface_pose_publisher = self.create_publisher(Pose, "surface_pose", 10)
         self.cam_sub = self.create_subscription(Image, '/camera/camera/color/image_raw', self.get_image_callback, 10)
 
         self.broadcaster = TransformBroadcaster(self)
@@ -71,20 +73,22 @@ class Calibrator(Node):
         world_camera_tf = TransformStamped()
         world_camera_tf.header.stamp = self.get_clock().now().to_msg()
         world_camera_tf.header.frame_id = 'fer_hand'
-        world_camera_tf.child_frame_id = 'camera_color_optical_frame'
-        world_camera_tf.transform.translation.x = 0.045466 # change to match camera mounting
-        world_camera_tf.transform.translation.y = 0.0
-        world_camera_tf.transform.translation.z = 0.01
+        world_camera_tf.child_frame_id = 'camera_link'
+        world_camera_tf.transform.translation.x = 0.05366 # change to match camera mounting
+        world_camera_tf.transform.translation.y = -0.0193
+        world_camera_tf.transform.translation.z = 0.0025
 
-        # world_camera_tf.transform.rotation.x = 0.0 # change to match camera mounting
-        # world_camera_tf.transform.rotation.y = 0.7071045
-        # world_camera_tf.transform.rotation.z = 0.0
-        # world_camera_tf.transform.rotation.w = 0.7071045
+        world_camera_tf.transform.rotation.x = 0.0 # change to match camera mounting
+        world_camera_tf.transform.rotation.y = -0.7071045
+        world_camera_tf.transform.rotation.z = 0.0
+        world_camera_tf.transform.rotation.w = 0.7071045
+
         self.static_broadcaster.sendTransform(world_camera_tf)
         
 
         self.motion_planner = MotionPlanner(self)
         self.in_position = False
+        self.surface_published = False
 
         self.calibrate_server = self.create_service(Empty, "calibrate", self.calibrate_callback)
 
@@ -100,37 +104,48 @@ class Calibrator(Node):
         """
         # self.get_logger().info("not in position")
 
-        # if self.in_position:
+        if self.in_position and not self.surface_published:
             # self.get_logger().info("IN POSITION")
-        if self.current_image is not None:
-            # cv_image = self.bridge.compressed_imgmsg_to_cv2(self.current_image, desired_encoding='passthrough')
-            # gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
-            
-            try:
-                base_tag_tf = self.buffer.lookup_transform('tag', 'camera_color_optical_frame', rclpy.time.Time())
-                pose = Pose()
-                pose.position.x = base_tag_tf.transform.translation.x
-                pose.position.y = base_tag_tf.transform.translation.y
-                pose.position.z = base_tag_tf.transform.translation.z
-                pose.orientation = base_tag_tf.transform.rotation
+            if self.current_image is not None:
+                # cv_image = self.bridge.compressed_imgmsg_to_cv2(self.current_image, desired_encoding='passthrough')
+                # gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
+                
+                try:
+                    base_tag_tf = self.buffer.lookup_transform('base', 'tag', rclpy.time.Time())
+                    pose = Pose()
+                    pose.position.x = base_tag_tf.transform.translation.x
+                    pose.position.y = base_tag_tf.transform.translation.y
+                    pose.position.z = base_tag_tf.transform.translation.z
+                    pose.orientation = base_tag_tf.transform.rotation
 
-                inches = pose.position.z * 39.3701
+                    self.get_logger().info("x " + str(base_tag_tf.transform.translation.x) )
+                    self.get_logger().info("y " + str(base_tag_tf.transform.translation.y) )
+                    self.get_logger().info("z " + str(base_tag_tf.transform.translation.z) )
+                    self.get_logger().info("\n")
 
-                self.get_logger().info("height is " + str(inches) + " inches")
+                    self.surface_pose_publisher.publish(pose)
+                    self.surface_published = True
+
+
+
+
+                # inches = pose.position.z * 39.3701
+
+                # self.get_logger().info("height is " + str(inches) + " inches")
 
                 # surface = self.create_marker(0, 'surface', 'camera_color_optical_frame', pose, [self.tagsize, self.tagsize, 0.1], [1.0, 1.0, 1.0], 0.5)
                 # self.surface_publisher.publish(surface)
             
-            except tf2_ros.LookupException as e:
-                # the frames don't exist yet
-                self.get_logger().info(f'Lookup exception: {e}')
-            except tf2_ros.ConnectivityException as e:
-                # the tf tree has a disconnection
-                self.get_logger().info(f'Connectivity exception: {e}')
-            except tf2_ros.ExtrapolationException as e:
-                # the times are two far apart to extrapolate
-                self.get_logger().info(f'Extrapolation exception: {e}')
-            pass
+                except tf2_ros.LookupException as e:
+                    # the frames don't exist yet
+                    self.get_logger().info(f'Lookup exception: {e}')
+                except tf2_ros.ConnectivityException as e:
+                    # the tf tree has a disconnection
+                    self.get_logger().info(f'Connectivity exception: {e}')
+                except tf2_ros.ExtrapolationException as e:
+                    # the times are two far apart to extrapolate
+                    self.get_logger().info(f'Extrapolation exception: {e}')
+                pass
             # detections = self.detector.detect(gray)
             
             # detection_num = 0

@@ -109,7 +109,7 @@ class MotionPlanner():
         self._hand_group_name = 'hand'
         self._hand_joint_names = ['fer_finger_joint1', 'fer_finger_joint2']
 
-        self._joint_tolerance = 0.05
+        self._joint_tolerance = 0.0005
         self._position_tolerance = 0.01
         self._orientation_tolerance = 0.01
         self._base_frame = 'base'
