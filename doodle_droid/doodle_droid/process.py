@@ -23,7 +23,6 @@ class ImageProcessingNode(Node):
         self.take_picture_service = self.create_service(Empty, '/take_picture', self.capture_image)
         self.processed_image_pub = self.create_publisher(String, '/new_image', 10)
         self.current_image = None
-        self.absolute_path = '/home/harrison-bounds/ws/ES_HW/doodle_droid/src/DoodleDroid/doodle_droid/doodle_droid/images/my_smiley.jpeg'
         self.pkg_name = "doodle_droid"
         self.pkg_share = get_package_share_directory(self.pkg_name)
         
