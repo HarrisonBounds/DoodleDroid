@@ -98,7 +98,14 @@ def plot_lines(lines, ax=None, **kwargs):
     if ax_was_none:
         return fig, ax
     
-def tour_to_robot_waypoints(lines, tour, paper_height_fn=None, pen_clearance=1.0, paper_width=0.1, paper_height=0.1, xoffset=.25, yoffset=0.05):
+def tour_to_robot_waypoints(lines,
+                            tour,
+                            paper_height_fn=None,
+                            pen_clearance=1.0,
+                            paper_width=0.1,
+                            paper_height=0.1,
+                            xoffset=.25,
+                            yoffset=0.05):
     assert paper_height_fn is not None, "paper_height_fn must be provided"
     pen_up_dists = []
     robot_waypoints = []
