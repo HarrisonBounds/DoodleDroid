@@ -30,22 +30,40 @@ class RoutePlannerNode(Node):
 
         self._test_server = self.create_service(Empty, "_test_line", self._test_line)
 
-        self.paper_height_model = PlanePaperHeightModel(0, 0, 1, -0.188) # default to flat paper
+        self.paper_height_model = None
 
         self._draw_waypoints = None
         self._draw_server = self.create_service(Empty, "_draw", self._draw_callback)
 
         self._brush_strokes_subscription = self.create_subscription(String, "/new_image", self._route_callback,10)
 
-        return # OVERRIDE LACK OF FULL SERVICE SIGNATURES OF THE BELOW!
-        raise NotImplementedError("coordinate msg type of a paper height model topic")
-        self._paper_height_subscription = self.create_subscription(String, "paper_height", self._paper_height_callback, 10)
+        # PlanePaperHeightModel(0, 0, 1, -0.188) # default to flat paper
+        self.surface_pose = None
+        self.drawing_dims = None
 
+        self._surface_pose_subscription = self.create_subscription(Pose, 'surface_pose', self._surface_pose_callback, 10)
+        self._drawing_dims_subscription = self.create_subscription(Vector3, 'drawing_dims', self._drawing_dims_callback, 10)
         
+
+    def _surface_pose_callback(self, msg):
+        self.get_logger().info(f"Received surface pose: {msg}")
+        self.surface_pose = msg
+        self._paper_height_callback()
+
+    def _drawing_dims_callback(self, msg):
+        self.get_logger().info(f"Received drawing dimensions: {msg}")
+        self.drawing_dims = msg
+        self._paper_height_callback()
     
-    def _paper_height_callback(self, msg):
-        self.get_logger().info(f"Received paper height model: {msg.data}")
-        self.paper_height_model.update(*msg.data)
+    def _paper_height_callback(self):
+        if self.surface_pose is not None and self.drawing_dims is not None:
+            self.paper_height_model = PlanePaperHeightModel(self.surface_pose.position.x,
+                                                            self.surface_pose.position.y,
+                                                            self.surface_pose.position.z,
+                                                            -self.drawing_dims.z)
+            self.get_logger().info(f"Paper height model: {self.paper_height_model}")
+        else:
+            self.get_logger().info("Waiting for surface pose and drawing dimensions")
     
     def pose_waypoints_from_xyz(self, pts):
         waypoints = PoseArray()
