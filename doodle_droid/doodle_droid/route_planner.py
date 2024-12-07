@@ -13,10 +13,12 @@ from action_msgs.msg import GoalStatus
 import time
 import json
 
+from ament_index_python.packages import get_package_share_directory
+
 import numpy as np
 
 from doodle_droid.paper_height_model import PaperHeightModel, FlatPaperHeightModel, PlanePaperHeightModel
-from doodle_droid.stroke_router_utils import stroke_dist, lines_to_endpoints, get_cost_matrix, tour_to_robot_waypoints, tsp_nearest_neighbor
+from doodle_droid.stroke_router_utils import stroke_dist, lines_to_endpoints, get_cost_matrix, tour_to_robot_waypoints, tsp_nearest_neighbor, plot_robot_waypoints
 from doodle_droid.robot_state import RobotState
 from doodle_droid.motion_planner import MotionPlanner
 
@@ -25,6 +27,10 @@ from doodle_droid.motion_planner import MotionPlanner
 class RoutePlannerNode(Node):
     def __init__(self):
         super().__init__('route_planner_node')
+        self.pkg_name = "doodle_droid"
+
+        self.pkg_share = get_package_share_directory(self.pkg_name)
+        
         self._robot_state = RobotState(self)
         self._motion_planner = MotionPlanner(self)
 
@@ -34,6 +40,7 @@ class RoutePlannerNode(Node):
 
         self._draw_waypoints = None
         self._draw_server = self.create_service(Empty, "_draw", self._draw_callback)
+        self._plot_server = self.create_service(Empty, "_plot", self._plot_callback)
 
         self._brush_strokes_subscription = self.create_subscription(String, "/new_image", self._route_callback,10)
 
@@ -70,6 +77,10 @@ class RoutePlannerNode(Node):
         start = waypoints.poses[0]
         await self._motion_planner.plan_c(start, execute=True) # go to starting waypoint
         await self._motion_planner.execute_waypoints(waypoints, 1.0) # traverse all waypoints
+
+    async def _plot_callback(self, request, response):
+        fig, ax = plot_robot_waypoints(self._draw_waypoints)
+        fig.savefig(f"{self.pkg_share}/output.png")
 
     async def _draw_callback(self, request, response):
         if self._draw_waypoints is None:
