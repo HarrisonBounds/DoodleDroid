@@ -123,10 +123,14 @@ def tour_to_robot_waypoints(lines,
         if line_segment_idx1 == line_segment_idx2: # this is a pen-down stroke.
             for waypoint in lines[line_segment_idx1]:
                 a,b = waypoint
-                robot_waypoints.append(((a*paper_width + xoffset, b*paper_height + yoffset), paper_height_fn(*waypoint)))
+                robot_waypoints.append((a*paper_width + xoffset, b*paper_height + yoffset, paper_height_fn(*waypoint)))
         else:
-            robot_waypoints.append((*A, paper_height_fn(*A)+pen_clearance))
-            robot_waypoints.append((*B, paper_height_fn(*B)+pen_clearance))
+            
+            for (a, b) in [A,B]:
+                robot_waypoints.append((a*paper_width + xoffset, b*paper_height + yoffset, paper_height_fn(*waypoint)+pen_clearance))
+            
+            # robot_waypoints.append((*A, paper_height_fn(*A)+pen_clearance))
+            # robot_waypoints.append((*B, paper_height_fn(*B)+pen_clearance))
 
             pen_up_dists.append(euclidean_distance(A, B))
 

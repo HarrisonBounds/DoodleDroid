@@ -39,8 +39,8 @@ class RoutePlannerNode(Node):
         self.paper_height_model = PlanePaperHeightModel(0, 0, 1, -0.188) # default to flat paper
 
         self._draw_waypoints = None
-        self._draw_server = self.create_service(Empty, "_draw", self._draw_callback)
-        self._plot_server = self.create_service(Empty, "_plot", self._plot_callback)
+        self._draw_server = self.create_service(Empty, "/draw", self._draw_callback)
+        self._plot_server = self.create_service(Empty, "/plot", self._plot_callback)
 
         self._brush_strokes_subscription = self.create_subscription(String, "/new_image", self._route_callback,10)
 
@@ -79,14 +79,19 @@ class RoutePlannerNode(Node):
         await self._motion_planner.execute_waypoints(waypoints, 1.0) # traverse all waypoints
 
     async def _plot_callback(self, request, response):
-        fig, ax = plot_robot_waypoints(self._draw_waypoints)
-        fig.savefig(f"{self.pkg_share}/output.png")
+        self.get_logger().info("plotting waypoints")
+        if self._draw_waypoints is not None:
+            fig, ax = plot_robot_waypoints(self._draw_waypoints)
+            fig.savefig(f"{self.pkg_share}/output.png")
+            self.get_logger().info("done plotting waypoints")
+        
+        return response
 
     async def _draw_callback(self, request, response):
         if self._draw_waypoints is None:
             self.get_logger().info("No waypoints to draw")
             return response
-        
+
         await self._execute_waypoints(self._draw_waypoints)
         return response
     
@@ -113,7 +118,7 @@ class RoutePlannerNode(Node):
         self.get_logger().info(f"Total distance: {total_distance}")
         self.get_logger().info(f"Pen down distance: {pen_down_dist} ({100 * pen_down_dist/total_distance:.2f}% of total)")
         self.get_logger().info(f"Pen up distance: {pen_up_dist} ({100 * pen_up_dist/total_distance:.2f}% of total)")
-    
+        self.get_logger().info(f"draw waypoints: { self._draw_waypoints}") 
         return response
     
     async def _test_line(self, request, response):
