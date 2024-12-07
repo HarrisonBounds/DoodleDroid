@@ -101,6 +101,7 @@ class RoutePlannerNode(Node):
         tour, _ = tsp_nearest_neighbor(cost_matrix)
 
         pen_up_dists, robot_xyz_waypoints = tour_to_robot_waypoints(lines,
+                                                                    stroke_segments,
                                                                     tour,
                                                                     paper_height_fn=self.paper_height_model.get_paper_height,
                                                                     pen_clearance=1.0)

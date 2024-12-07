@@ -99,6 +99,7 @@ def plot_lines(lines, ax=None, **kwargs):
         return fig, ax
     
 def tour_to_robot_waypoints(lines,
+                            stroke_segments,
                             tour,
                             paper_height_fn=None,
                             pen_clearance=1.0,
