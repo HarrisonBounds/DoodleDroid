@@ -1,10 +1,10 @@
 <launch>
-    <arg name="demo" default="true" description="Whether start demo.launch.py for Franka Panda arm."/>
+    <arg name="demo" default="false" description="Whether start demo.launch.py for Franka Panda arm."/>
     
     <include if="$(var demo)" file="$(find-pkg-share franka_fer_moveit_config)/launch/demo.launch.py"/>
 
     <include unless="$(var demo)" file="$(find-pkg-share franka_fer_moveit_config)/launch/moveit_rviz.launch.py">
-        <arg name="robot_ip" value="192.168.18.11"/>
+        <arg name="robot_ip" value="panda0.robot"/>
     </include>
 
 </launch>
