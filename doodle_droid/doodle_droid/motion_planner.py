@@ -411,24 +411,30 @@ class MotionPlanner():
 
     async def execute_waypoints(self,
                                 waypoints: PoseArray,
-                                dt: float = 0.5,
+                                velocity: float = 0.02,
                                 start_robot_state: RobotState = None):
         """
         Execute the waypoints.
 
         :param waypoints: The waypoints
         :type waypoints: geometry_msgs.msg.PoseArray
-        :param dt: The time step
-        :type dt: float
+        :param velocity: The velocity
+        :type velocity: float
         :param start_robot_state: The start robot state
         :type start_robot_state: moveit_msgs.msg.RobotState
 
         :return: The result and status
         :rtype: tuple
         """
+        # Go to the first waypoint
+        await self.plan_c(waypoints.poses[0],
+                          start_robot_state,
+                          execute=True)
+
+        # Construct the joint trajectory
         joint_traj =\
             await self._construct_joint_trajectory_from_waypoints(waypoints,
-                                                                  dt)
+                                                                  velocity)
         # Construct the goal
         if (start_robot_state is None):
             start_robot_state =\
@@ -482,16 +488,17 @@ class MotionPlanner():
             tolerance_list.append(tolerance)
         return tolerance_list
 
-    async def _construct_joint_trajectory_from_waypoints(self,
-                                                         waypoints: PoseArray,
-                                                         dt: float = 0.5):
+    async def _construct_joint_trajectory_from_waypoints(
+            self,
+            waypoints: PoseArray,
+            velocity: float = 0.02):
         """
         Construct the cartesian path from waypoints.
 
         :param waypoints: The waypoints
         :type waypoints: geometry_msgs.msg.PoseArray
-        :param dt: The time step
-        :type dt: float
+        :param velocity: The velocity
+        :type velocity: float
 
         :return: The joint trajectory
         :rtype: trajectory_msgs.msg.JointTrajectory
@@ -501,16 +508,14 @@ class MotionPlanner():
         joint_traj.joint_names = self._joint_names
         joint_states = self._robot_state.get_arm_joint_states()
         t = 0.0
+        pose_cache = None
         for waypoint in waypoints.poses:
             # Add current joint states to the trajectory
             traj_point = JointTrajectoryPoint()
             traj_point.positions = joint_states.position
-            sec = int(math.floor(t))
-            nanosec = int((t - sec) * 1e9)
-            traj_point.time_from_start = Duration(sec=sec, nanosec=nanosec)
             joint_traj.points.append(traj_point)
 
-            # SOlve the next waypoint IK
+            # Solve the next waypoint IK
             waypoint_stampted = PoseStamped()
             waypoint_stampted.pose = waypoint
             waypoint_stampted.header.frame_id = waypoints.header.frame_id
@@ -522,11 +527,23 @@ class MotionPlanner():
                 )
             if (ik_res.error_code.val != MoveItErrorCodes.SUCCESS):
                 self._node.get_logger().info(
-                    f'IK failed. Error code: {ik_res.error_code.val}')
+                    f'IK failed. Error code: {ik_res.error_code.val}, '
+                    + 'pose: {str(waypoint)}')
                 return None
             joint_states = ik_res.solution.joint_state
             joint_states = self._filter_out_arm_joint_states(joint_states)
-            t += dt
+            if pose_cache is None:
+                t = 0.0
+            else:
+                distance = math.sqrt(
+                    (waypoint.position.x - pose_cache.position.x) ** 2 +
+                    (waypoint.position.y - pose_cache.position.y) ** 2 +
+                    (waypoint.position.z - pose_cache.position.z) ** 2)
+                t += distance/velocity
+            sec = int(math.floor(t))
+            nanosec = int((t - sec) * 1e9)
+            traj_point.time_from_start = Duration(sec=sec, nanosec=nanosec)
+            pose_cache = waypoint
         joint_traj.header.frame_id = waypoints.header.frame_id
         joint_traj.header.stamp = waypoints.header.stamp
         return joint_traj
