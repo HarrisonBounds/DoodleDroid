@@ -11,7 +11,6 @@ def launch_setup(context, *args, **kwargs):
         'marker_size': LaunchConfiguration('marker_size'),
         'marker_id': LaunchConfiguration('marker_id'),
         'reference_frame': LaunchConfiguration('reference_frame'),
-        'camera_frame': 'camera_color_optical_frame',
         'marker_frame': LaunchConfiguration('marker_frame'),
         'corner_refinement': LaunchConfiguration('corner_refinement'),
     }
@@ -45,7 +44,7 @@ def generate_launch_description():
     )
 
     reference_frame = DeclareLaunchArgument(
-        'reference_frame', default_value='',
+        'reference_frame', default_value='camera_color_optical_frame',
         description='Reference frame. '
         'Leave it empty and the pose will be published wrt param parent_name. '
     )
