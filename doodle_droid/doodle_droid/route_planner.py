@@ -88,11 +88,26 @@ class RoutePlannerNode(Node):
         return response
 
     async def _draw_callback(self, request, response):
-        if self._draw_waypoints is None:
-            self.get_logger().info("No waypoints to draw")
-            return response
+        # if self._draw_waypoints is None:
+        #     self.get_logger().info("No waypoints to draw")
+        #     return response
 
-        await self._execute_waypoints(self._draw_waypoints)
+        N = 100
+        paper_height = 0.174
+        paper_size = 0.05
+        paper_origin = [0.4, 0.0, paper_height]
+        t = np.linspace(0, 2*np.pi, N)
+        x = paper_size * np.cos(t) + paper_origin[0]
+        y = paper_size * np.sin(t) + paper_origin[1]
+        z = np.full_like(x, paper_height)
+        waypoints = list(zip(x, y, z))
+
+        # await self._execute_waypoints(self._draw_waypoints)
+        self.get_logger().info("going to ready pose")
+        await self._motion_planner.plan_n("ready", execute=True)
+        self.get_logger().info("at ready pose. drawing circle")
+        await self._execute_waypoints(waypoints)
+        self.get_logger().info("done drawing circle")
         return response
     
     def _route_callback(self, request, response):
