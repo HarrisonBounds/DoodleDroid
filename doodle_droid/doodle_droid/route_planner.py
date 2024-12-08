@@ -124,7 +124,7 @@ class RoutePlannerNode(Node):
                                                                     stroke_segments,
                                                                     tour,
                                                                     paper_height_fn=self.paper_height_model.get_paper_height,
-                                                                    pen_clearance=0.25)
+                                                                    pen_clearance=0.10)
         self._draw_waypoints = robot_xyz_waypoints
 
         pen_up_dist = sum(pen_up_dists)
