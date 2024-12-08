@@ -34,10 +34,12 @@ class RoutePlannerNode(Node):
         self._robot_state = RobotState(self)
         self._motion_planner = MotionPlanner(self)
 
+        self.point_offset = Point(x=0.4, y=0.0, z=0.20)
+        self._point_offseet_subscription = self.create_subscription(Point, "/set_offset", self._update_offset, 10)
         self._test_server = self.create_service(Empty, "/test_line", self._test_line)
 
-        self.paper_height_model = PlanePaperHeightModel(0, 0, 1, -0.156) # default to flat paper
-        # self.paper_height_model = PlanePaperHeightModel(0, 0, 1, 0) # default to flat paper
+        # self.paper_height_model = PlanePaperHeightModel(0, 0, 1, -0.156) # default to flat paper
+        self.paper_height_model = PlanePaperHeightModel(0, 0, 1, 0) # default to flat paper
 
         self._draw_waypoints = None
         self._draw_server = self.create_service(Empty, "/draw", self._draw_callback)
@@ -51,6 +53,8 @@ class RoutePlannerNode(Node):
         self._paper_height_subscription = self.create_subscription(String, "paper_height", self._paper_height_callback, 10)
 
         
+    def _update_offset(self, msg):
+        self.point_offset = msg
     
     def _paper_height_callback(self, msg):
         self.get_logger().info(f"Received paper height model: {msg.data}")
@@ -93,6 +97,12 @@ class RoutePlannerNode(Node):
         if self._draw_waypoints is None:
             self.get_logger().info("No waypoints to draw")
             return response
+        
+        dx = self.point_offset.x
+        dy = self.point_offset.y
+        dz = self.point_offset.z
+        
+        offset_waypoints = [(x+dx, y+dy, z+dz) for (x,y,z) in self._draw_waypoints]
 
         # N = 10
         # paper_height = 0.174
@@ -107,7 +117,7 @@ class RoutePlannerNode(Node):
 
         await self._motion_planner.plan_n("ready", execute=True)
         self.get_logger().info("at ready pose. drawing image")
-        await self._execute_waypoints(self._draw_waypoints)
+        await self._execute_waypoints(offset_waypoints)
         self.get_logger().info("done drawing image")
         return response
     
@@ -124,7 +134,8 @@ class RoutePlannerNode(Node):
         pen_up_dists, robot_xyz_waypoints = tour_to_robot_waypoints(lines,
                                                                     stroke_segments,
                                                                     tour,
-                                                                    xoffset=0.4,
+                                                                    xoffset=0.0,
+                                                                    yoffset=0.0,
                                                                     paper_height_fn=self.paper_height_model.get_paper_height,
                                                                     pen_clearance=0.01)
         self._draw_waypoints = robot_xyz_waypoints
@@ -140,12 +151,18 @@ class RoutePlannerNode(Node):
         return response
     
     async def _test_line(self, request, response):
-        x = 0.5
-        y = 0.0
-        dy = 0.1
-        z = 0.188
-        pts = [[x,y+dy,z], [x, y-dy, z]]
-        await self._execute_waypoints(pts)
+        # await self._motion_planner.plan_n('ready', execute=True)
+        pose = Pose()
+        pose.position.x = self.point_offset.x
+        pose.position.y = self.point_offset.y
+        pose.position.z = self.point_offset.z
+        pose.orientation = Quaternion(x=0.9238792,
+                                        y=-0.3826833,
+                                        z=0.0003047,
+                                        w=0.0007357)
+        
+        await self._motion_planner.plan_c(pose, execute=True)
+        # await self._execute_waypoints(pts)
 
         return response
 

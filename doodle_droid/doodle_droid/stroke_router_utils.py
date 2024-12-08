@@ -122,7 +122,7 @@ def tour_to_robot_waypoints(lines,
         B = stroke_segments[line_segment_idx2][sub_field2]
         if line_segment_idx1 == line_segment_idx2: # this is a pen-down stroke.
             segment_waypoints = lines[line_segment_idx1]
-            for waypoint in [segment_waypoints[0], segment_waypoints[1]]:
+            for waypoint in segment_waypoints: #[segment_waypoints[0], segment_waypoints[-1]]:
                 a,b = waypoint
                 robot_waypoints.append((a*paper_width + xoffset, b*paper_height + yoffset, paper_height_fn(*waypoint)))
         else:
