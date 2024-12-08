@@ -36,7 +36,7 @@ class RoutePlannerNode(Node):
 
         self._test_server = self.create_service(Empty, "/test_line", self._test_line)
 
-        self.paper_height_model = PlanePaperHeightModel(0, 0, 1, -0.188) # default to flat paper
+        self.paper_height_model = PlanePaperHeightModel(0, 0, 1, -0.156) # default to flat paper
         # self.paper_height_model = PlanePaperHeightModel(0, 0, 1, 0) # default to flat paper
 
         self._draw_waypoints = None
@@ -124,8 +124,9 @@ class RoutePlannerNode(Node):
         pen_up_dists, robot_xyz_waypoints = tour_to_robot_waypoints(lines,
                                                                     stroke_segments,
                                                                     tour,
+                                                                    xoffset=0.4,
                                                                     paper_height_fn=self.paper_height_model.get_paper_height,
-                                                                    pen_clearance=0.10)
+                                                                    pen_clearance=0.01)
         self._draw_waypoints = robot_xyz_waypoints
 
         pen_up_dist = sum(pen_up_dists)
@@ -139,9 +140,9 @@ class RoutePlannerNode(Node):
         return response
     
     async def _test_line(self, request, response):
-        x = 0.25
+        x = 0.5
         y = 0.0
-        dy = 0.05
+        dy = 0.1
         z = 0.188
         pts = [[x,y+dy,z], [x, y-dy, z]]
         await self._execute_waypoints(pts)
