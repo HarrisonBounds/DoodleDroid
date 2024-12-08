@@ -1,0 +1,5 @@
+<launch>
+    <include file="$(find-pkg-share doodle_droid)/launch/fer.launch.xml" />
+    <include file="$(find-pkg-share doodle_droid)/launch/camera.launch.xml" />
+    <include file="$(find-pkg-share doodle_droid)/launch/route.launch.xml" />
+</launch>
