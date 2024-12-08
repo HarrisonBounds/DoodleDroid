@@ -121,7 +121,11 @@ def tour_to_robot_waypoints(lines,
         A = stroke_segments[line_segment_idx1][sub_field1]
         B = stroke_segments[line_segment_idx2][sub_field2]
         if line_segment_idx1 == line_segment_idx2: # this is a pen-down stroke.
-            segment_waypoints = lines[line_segment_idx1]
+            if sub_field1 > sub_field2:
+                segment_waypoints = lines[line_segment_idx1][::-1]
+            else:
+                segment_waypoints = lines[line_segment_idx1]
+            
             for waypoint in segment_waypoints: #[segment_waypoints[0], segment_waypoints[-1]]:
                 a,b = waypoint
                 robot_waypoints.append((a*paper_width + xoffset, b*paper_height + yoffset, paper_height_fn(*waypoint)))
@@ -145,12 +149,16 @@ def plot_robot_waypoints(robot_waypoints, ax=None, paper_height_fn=None, **kwarg
 
     ax_was_none = ax is None
     if ax is None:
-        fig, ax = plt.subplots()
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        # fig, ax = plt.subplots()
     for w1, w2 in zip(robot_waypoints[:-1], robot_waypoints[1:]):
         if w1[2] == w2[2]:
             c = 'grey' if w1[2] <= paper_height_fn(w1[0], w1[1]) else 'pink'
-            ax.plot([w1[0], w2[0]], [w1[1], w2[1]], linestyle='dashed', c=c)
-
+            ax.plot3D([w1[0], w2[0]], [w1[1], w2[1]], [w1[2], w2[2]], linestyle='dashed', c=c)
+        else:
+             ax.plot3D([w1[0], w2[0]], [w1[1], w2[1]], [w1[2], w2[2]], linestyle='dotted', c='k')
+             
     if ax_was_none:
         return fig, ax
         

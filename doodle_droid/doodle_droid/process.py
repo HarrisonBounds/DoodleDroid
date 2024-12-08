@@ -26,7 +26,8 @@ class ImageProcessingNode(Node):
         self.pkg_name = "doodle_droid"
         self.pkg_share = get_package_share_directory(self.pkg_name)
         
-        self.path = f"{self.pkg_share}/images/my_smiley.jpeg"
+        # self.path = f"{self.pkg_share}/images/my_smiley.jpeg"
+        self.path = f"{self.pkg_share}/images/matt.png"
         self.bridge = CvBridge()
         self.from_file = True
         

@@ -21,7 +21,7 @@ from doodle_droid.paper_height_model import PaperHeightModel, FlatPaperHeightMod
 from doodle_droid.stroke_router_utils import stroke_dist, lines_to_endpoints, get_cost_matrix, tour_to_robot_waypoints, tsp_nearest_neighbor, plot_robot_waypoints
 from doodle_droid.robot_state import RobotState
 from doodle_droid.motion_planner import MotionPlanner
-
+from doodle_droid.path_visualizer import PathVisualizer
 
 
 class RoutePlannerNode(Node):
@@ -32,6 +32,7 @@ class RoutePlannerNode(Node):
         self.pkg_share = get_package_share_directory(self.pkg_name)
         
         self._robot_state = RobotState(self)
+        self._path_visualizer = PathVisualizer(self)
         self._motion_planner = MotionPlanner(self)
 
         self.point_offset = Point(x=0.4, y=0.0, z=0.20)
@@ -80,14 +81,16 @@ class RoutePlannerNode(Node):
     
     async def _execute_waypoints(self, pts):
         waypoints = self.pose_waypoints_from_xyz(pts)
+        self._path_visualizer.set_visualizing_waypoints(waypoints)
+        
         start = waypoints.poses[0]
         await self._motion_planner.plan_c(start, execute=True) # go to starting waypoint
-        await self._motion_planner.execute_waypoints(waypoints, 1.0) # traverse all waypoints
+        await self._motion_planner.execute_waypoints(waypoints) # traverse all waypoints
 
     async def _plot_callback(self, request, response):
         self.get_logger().info("plotting waypoints")
         if self._draw_waypoints is not None:
-            fig, ax = plot_robot_waypoints(self._draw_waypoints)
+            fig, ax = plot_robot_waypoints(self._draw_waypoints, paper_height_fn=self.paper_height_model.get_paper_height)
             fig.savefig(f"{self.pkg_share}/output.png")
             self.get_logger().info("done plotting waypoints")
         
@@ -115,7 +118,7 @@ class RoutePlannerNode(Node):
         # waypoints = list(zip(x, y, z))
         self.get_logger().info("going to ready pose")
 
-        await self._motion_planner.plan_n("ready", execute=True)
+        # await self._motion_planner.plan_n("ready", execute=True)
         self.get_logger().info("at ready pose. drawing image")
         await self._execute_waypoints(offset_waypoints)
         self.get_logger().info("done drawing image")
@@ -123,6 +126,7 @@ class RoutePlannerNode(Node):
     
     def _route_callback(self, request, response):
         lines = json.loads(request.data)
+        lines = [[(1-x,y) for (x,y) in line] for line in lines]
         pen_down_dists = [stroke_dist(np.array(line)) for line in lines]
         pen_down_dist = sum(pen_down_dists)
 
@@ -134,6 +138,8 @@ class RoutePlannerNode(Node):
         pen_up_dists, robot_xyz_waypoints = tour_to_robot_waypoints(lines,
                                                                     stroke_segments,
                                                                     tour,
+                                                                    paper_width=0.2,
+                                                                    paper_height=0.2,
                                                                     xoffset=0.0,
                                                                     yoffset=0.0,
                                                                     paper_height_fn=self.paper_height_model.get_paper_height,

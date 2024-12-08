@@ -427,9 +427,9 @@ class MotionPlanner():
         :rtype: tuple
         """
         # Go to the first waypoint
-        await self.plan_c(waypoints.poses[0],
-                          start_robot_state,
-                          execute=True)
+        # await self.plan_c(waypoints.poses[0],
+        #                   start_robot_state,
+        #                   execute=True)
 
         # Construct the joint trajectory
         joint_traj =\
@@ -539,7 +539,8 @@ class MotionPlanner():
                     (waypoint.position.x - pose_cache.position.x) ** 2 +
                     (waypoint.position.y - pose_cache.position.y) ** 2 +
                     (waypoint.position.z - pose_cache.position.z) ** 2)
-                t += distance/velocity
+                dt = 0.5 # max(distance/velocity, 0.01)
+                t += dt
             sec = int(math.floor(t))
             nanosec = int((t - sec) * 1e9)
             traj_point.time_from_start = Duration(sec=sec, nanosec=nanosec)
