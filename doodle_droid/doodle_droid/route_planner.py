@@ -37,6 +37,7 @@ class RoutePlannerNode(Node):
         self._test_server = self.create_service(Empty, "_test_line", self._test_line)
 
         self.paper_height_model = PlanePaperHeightModel(0, 0, 1, -0.188) # default to flat paper
+        # self.paper_height_model = PlanePaperHeightModel(0, 0, 1, 0) # default to flat paper
 
         self._draw_waypoints = None
         self._draw_server = self.create_service(Empty, "/draw", self._draw_callback)
@@ -88,26 +89,25 @@ class RoutePlannerNode(Node):
         return response
 
     async def _draw_callback(self, request, response):
-        # if self._draw_waypoints is None:
-        #     self.get_logger().info("No waypoints to draw")
-        #     return response
+        if self._draw_waypoints is None:
+            self.get_logger().info("No waypoints to draw")
+            return response
 
-        N = 100
-        paper_height = 0.174
-        paper_size = 0.05
-        paper_origin = [0.4, 0.0, paper_height]
-        t = np.linspace(0, 2*np.pi, N)
-        x = paper_size * np.cos(t) + paper_origin[0]
-        y = paper_size * np.sin(t) + paper_origin[1]
-        z = np.full_like(x, paper_height)
-        waypoints = list(zip(x, y, z))
-
-        # await self._execute_waypoints(self._draw_waypoints)
+        # N = 10
+        # paper_height = 0.174
+        # paper_size = 0.05
+        # paper_origin = [0.4, 0.0, paper_height]
+        # t = np.linspace(0, 2*np.pi, N)
+        # x = paper_size * np.cos(t) + paper_origin[0]
+        # y = paper_size * np.sin(t) + paper_origin[1]
+        # z = np.full_like(x, paper_height)
+        # waypoints = list(zip(x, y, z))
         self.get_logger().info("going to ready pose")
+
         await self._motion_planner.plan_n("ready", execute=True)
-        self.get_logger().info("at ready pose. drawing circle")
-        await self._execute_waypoints(waypoints)
-        self.get_logger().info("done drawing circle")
+        self.get_logger().info("at ready pose. drawing image")
+        await self._execute_waypoints(self._draw_waypoints)
+        self.get_logger().info("done drawing image")
         return response
     
     def _route_callback(self, request, response):
@@ -124,12 +124,13 @@ class RoutePlannerNode(Node):
                                                                     stroke_segments,
                                                                     tour,
                                                                     paper_height_fn=self.paper_height_model.get_paper_height,
-                                                                    pen_clearance=1.0)
+                                                                    pen_clearance=0.25)
         self._draw_waypoints = robot_xyz_waypoints
 
         pen_up_dist = sum(pen_up_dists)
         total_distance = pen_down_dist + pen_up_dist
         
+        self.get_logger().info(f"Received {len(lines)} lines")
         self.get_logger().info(f"Total distance: {total_distance}")
         self.get_logger().info(f"Pen down distance: {pen_down_dist} ({100 * pen_down_dist/total_distance:.2f}% of total)")
         self.get_logger().info(f"Pen up distance: {pen_up_dist} ({100 * pen_up_dist/total_distance:.2f}% of total)")
