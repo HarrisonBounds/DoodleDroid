@@ -34,7 +34,7 @@ class RoutePlannerNode(Node):
         self._robot_state = RobotState(self)
         self._motion_planner = MotionPlanner(self)
 
-        self._test_server = self.create_service(Empty, "_test_line", self._test_line)
+        self._test_server = self.create_service(Empty, "/test_line", self._test_line)
 
         self.paper_height_model = PlanePaperHeightModel(0, 0, 1, -0.188) # default to flat paper
         # self.paper_height_model = PlanePaperHeightModel(0, 0, 1, 0) # default to flat paper
@@ -42,6 +42,7 @@ class RoutePlannerNode(Node):
         self._draw_waypoints = None
         self._draw_server = self.create_service(Empty, "/draw", self._draw_callback)
         self._plot_server = self.create_service(Empty, "/plot", self._plot_callback)
+
 
         self._brush_strokes_subscription = self.create_subscription(String, "/new_image", self._route_callback,10)
 
