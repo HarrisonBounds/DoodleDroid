@@ -92,14 +92,15 @@ class Calibrator(Node):
         world_camera_tf.header.stamp = self.get_clock().now().to_msg()
         world_camera_tf.header.frame_id = 'fer_hand'
         world_camera_tf.child_frame_id = 'camera_link'
-        world_camera_tf.transform.translation.x = -0.01751038# change to match camera mounting
-        world_camera_tf.transform.translation.y = 0.03731347
-        world_camera_tf.transform.translation.z = -0.05544694
+        world_camera_tf.transform.translation.x = 0.05567652250199682
+        world_camera_tf.transform.translation.y = 0.017477448428348884
+        world_camera_tf.transform.translation.z = 0.03728619733238588
 
-        world_camera_tf.transform.rotation.x = 0.00106468  # change to match camera mounting
-        world_camera_tf.transform.rotation.y =  0.69706528
-        world_camera_tf.transform.rotation.z = -0.0068949
-        world_camera_tf.transform.rotation.w = 0.71697372
+
+        world_camera_tf.transform.rotation.x = -0.005235918751358316
+        world_camera_tf.transform.rotation.y =  -0.7169794461515647
+        world_camera_tf.transform.rotation.z = -0.01297818109286954
+        world_camera_tf.transform.rotation.w = 0.6969538189625948
 
         self.static_broadcaster.sendTransform(world_camera_tf)
 
@@ -107,20 +108,38 @@ class Calibrator(Node):
 
         ########## OBTAINED FROM HAND EYE CALIBRATION
         # self.static_broadcaster = StaticTransformBroadcaster(self)
-        # world_camera_tf = TransformStamped()
-        # world_camera_tf.header.stamp = self.get_clock().now().to_msg()
-        # world_camera_tf.header.frame_id = 'fer_hand'
-        # world_camera_tf.child_frame_id = 'camera_color_optical_frame'
-        # world_camera_tf.transform.translation.x =  0.055954 # change to match camera mounting
-        # world_camera_tf.transform.translation.y = 0.032108
-        # world_camera_tf.transform.translation.z = 0.037019
+        # ee_camcal = TransformStamped()
+        # ee_camcal.header.stamp = self.get_clock().now().to_msg()
+        # ee_camcal.header.frame_id = 'fer_hand'
+        # # ee_camcal.child_frame_id = 'camera_color_optical_frame'
+        # ee_camcal.child_frame_id = 'calibrated'
+        # ee_camcal.transform.translation.x =  0.055954 # change to match camera mounting
+        # ee_camcal.transform.translation.y = 0.032108
+        # ee_camcal.transform.translation.z = 0.037019
 
-        # world_camera_tf.transform.rotation.x = 0.008965 # change to match camera mounting
-        # world_camera_tf.transform.rotation.y = -0.007981
-        # world_camera_tf.transform.rotation.z = -0.713568
-        # world_camera_tf.transform.rotation.w = 0.700483
+        # ee_camcal.transform.rotation.x = 0.008965 # change to match camera mounting
+        # ee_camcal.transform.rotation.y = -0.007981
+        # ee_camcal.transform.rotation.z = -0.713568
+        # ee_camcal.transform.rotation.w = 0.700483
 
-        # self.static_broadcaster.sendTransform(world_camera_tf)
+        # self.static_broadcaster.sendTransform(ee_camcal)
+
+        ### FOR DETERMINING CAMERA_LINK TF
+        # self.static_broadcaster = StaticTransformBroadcaster(self)
+        # cal_link = TransformStamped()
+        # cal_link.header.stamp = self.get_clock().now().to_msg()
+        # cal_link.header.frame_id = 'calibrated'
+        # # cal_link.child_frame_id = 'camera_color_optical_frame'
+        # cal_link.child_frame_id = 'cam_link_cal'
+        # cal_link.transform.translation.x =  0.014632730869929307 # change to match camera mounting
+        # cal_link.transform.translation.y = 0.0
+        # cal_link.transform.translation.z = 0.00029088615521028535
+
+        # cal_link.transform.rotation.x = 0.5015941997979191# change to match camera mounting
+        # cal_link.transform.rotation.y = -0.5005221105941958
+        # cal_link.transform.rotation.z = 0.4947025076383143
+        # cal_link.transform.rotation.w = 0.5031404420952272
+        # self.static_broadcaster.sendTransform(cal_link)
 
 
 
