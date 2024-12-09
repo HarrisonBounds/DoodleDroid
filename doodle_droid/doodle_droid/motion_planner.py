@@ -409,32 +409,9 @@ class MotionPlanner():
         self._robot_state.update_arm_joint_states(joint_states)
         return result.result, result.status
 
-    async def execute_waypoints(self,
-                                waypoints: PoseArray,
-                                velocity: float = 0.02,
-                                start_robot_state: RobotState = None):
-        """
-        Execute the waypoints.
-
-        :param waypoints: The waypoints
-        :type waypoints: geometry_msgs.msg.PoseArray
-        :param velocity: The velocity
-        :type velocity: float
-        :param start_robot_state: The start robot state
-        :type start_robot_state: moveit_msgs.msg.RobotState
-
-        :return: The result and status
-        :rtype: tuple
-        """
-        # Go to the first waypoint
-        # await self.plan_c(waypoints.poses[0],
-        #                   start_robot_state,
-        #                   execute=True)
-
-        # Construct the joint trajectory
-        joint_traj =\
-            await self._construct_joint_trajectory_from_waypoints(waypoints,
-                                                                  velocity)
+    async def execute_joint_trajectory(self,
+                                       joint_traj: JointTrajectory,
+                                        start_robot_state=None):
         # Construct the goal
         if (start_robot_state is None):
             start_robot_state =\
@@ -461,6 +438,35 @@ class MotionPlanner():
         self._robot_state.update_arm_joint_states(joint_states)
         return result.result, result.status
 
+    async def execute_waypoints(self,
+                                waypoints: PoseArray,
+                                velocity: float = 0.02,
+                                start_robot_state: RobotState = None):
+        """
+        Execute the waypoints.
+
+        :param waypoints: The waypoints
+        :type waypoints: geometry_msgs.msg.PoseArray
+        :param velocity: The velocity
+        :type velocity: float
+        :param start_robot_state: The start robot state
+        :type start_robot_state: moveit_msgs.msg.RobotState
+
+        :return: The result and status
+        :rtype: tuple
+        """
+        # Go to the first waypoint
+        # await self.plan_c(waypoints.poses[0],
+        #                   start_robot_state,
+        #                   execute=True)
+
+        # Construct the joint trajectory
+        joint_traj =\
+            await self._construct_joint_trajectory_from_waypoints(waypoints,
+                                                                  velocity)
+
+        return await self.execute_joint_trajectory(joint_traj, start_robot_state)
+    
     def _construct_tolerance_list(self,
                                   position_tolerance: float = 0.01,
                                   velocity_tolerance: float = 0.01,
@@ -539,7 +545,8 @@ class MotionPlanner():
                     (waypoint.position.x - pose_cache.position.x) ** 2 +
                     (waypoint.position.y - pose_cache.position.y) ** 2 +
                     (waypoint.position.z - pose_cache.position.z) ** 2)
-                dt = 0.5 # max(distance/velocity, 0.01)
+                dt = max(distance/velocity, 0.2)
+                # dt = 0.5 # used with success for full image
                 t += dt
             sec = int(math.floor(t))
             nanosec = int((t - sec) * 1e9)

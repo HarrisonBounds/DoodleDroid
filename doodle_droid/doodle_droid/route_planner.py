@@ -9,6 +9,8 @@ from sensor_msgs.msg import JointState
 from geometry_msgs.msg import Point, Quaternion, Vector3, Pose
 from std_srvs.srv import Empty
 from std_msgs.msg import String
+from builtin_interfaces.msg import Duration
+
 from action_msgs.msg import GoalStatus
 import time
 import json
@@ -27,6 +29,8 @@ from doodle_droid.path_visualizer import PathVisualizer
 class RoutePlannerNode(Node):
     def __init__(self):
         super().__init__('route_planner_node')
+        self._verbosity = 0
+
         self.pkg_name = "doodle_droid"
 
         self.pkg_share = get_package_share_directory(self.pkg_name)
@@ -35,27 +39,39 @@ class RoutePlannerNode(Node):
         self._path_visualizer = PathVisualizer(self)
         self._motion_planner = MotionPlanner(self)
 
+        self.pen_clearance = 0.01 # 1 cm
+        self.paper_size = Vector3(x=0.2, y=0.2, z=0.0)
         self.point_offset = Point(x=0.4, y=0.0, z=0.20)
         self._point_offseet_subscription = self.create_subscription(Point, "/set_offset", self._update_offset, 10)
+        self._paper_size_subscription = self.create_subscription(Vector3, "/paper_size", self._paper_size_callback, 10)
+
         self._test_server = self.create_service(Empty, "/test_line", self._test_line)
 
         # self.paper_height_model = PlanePaperHeightModel(0, 0, 1, -0.156) # default to flat paper
         self.paper_height_model = PlanePaperHeightModel(0, 0, 1, 0) # default to flat paper
 
+        self._max_vel = 0.02
         self._draw_waypoints = None
+        self._cached_joint_traj = None
         self._draw_server = self.create_service(Empty, "/draw", self._draw_callback)
         self._plot_server = self.create_service(Empty, "/plot", self._plot_callback)
+        self._outline_paper_server = self.create_service(Empty, "/outline_paper", self._outline_paper)
 
 
+        self._drawing_time_publisher = self.create_publisher(Duration, "/drawing_time", 10)
         self._brush_strokes_subscription = self.create_subscription(String, "/new_image", self._route_callback,10)
 
         return # OVERRIDE LACK OF FULL SERVICE SIGNATURES OF THE BELOW!
         raise NotImplementedError("coordinate msg type of a paper height model topic")
         self._paper_height_subscription = self.create_subscription(String, "paper_height", self._paper_height_callback, 10)
 
-        
+
+    def _paper_size_callback(self, msg):
+        self.paper_size = msg
+
     def _update_offset(self, msg):
         self.point_offset = msg
+        self._update_joint_traj()
     
     def _paper_height_callback(self, msg):
         self.get_logger().info(f"Received paper height model: {msg.data}")
@@ -79,13 +95,42 @@ class RoutePlannerNode(Node):
 
         return waypoints
     
-    async def _execute_waypoints(self, pts):
-        waypoints = self.pose_waypoints_from_xyz(pts)
+    def _waypoints_to_joint_traj(self, waypoints):
+        dx = self.point_offset.x
+        dy = self.point_offset.y
+        dz = self.point_offset.z
+        paper_width = self.paper_size.x
+        paper_height = self.paper_size.y
+        offset_waypoints = [(x+(dx*paper_width), y+(dy*paper_height), z+dz) for (x,y,z) in self._draw_waypoints]
+        waypoints = self.pose_waypoints_from_xyz(offset_waypoints)
         self._path_visualizer.set_visualizing_waypoints(waypoints)
+
+        return self._motion_planner._construct_joint_trajectory_from_waypoints(waypoints, self._max_vel)
+
+    def _update_joint_traj(self):
+        self._cached_joint_traj = self._waypoints_to_joint_traj(self._draw_waypoints)
+
+        final_time = self._cached_joint_traj.points[-1].time_from_start
+        self._drawing_time_publisher.publish(final_time)
+        self.get_logger().info(f"Drawing will take: {final_time.sec + final_time.nanosec*1e-9:8.4f} seconds")
+
+    async def _execute_traj(self):
         
-        start = waypoints.poses[0]
-        await self._motion_planner.plan_c(start, execute=True) # go to starting waypoint
-        await self._motion_planner.execute_waypoints(waypoints) # traverse all waypoints
+        if self._verbosity > 0:
+            self.get_logger().info("going to ready pose")
+
+        start_pose = self._cached_joint_traj.positions[0]
+        start_pose = JointState()
+        start_pose.name = self._cached_joint_traj.joint_names
+        start_pose.position = self._cached_joint_traj.positions[0]
+        await self._motion_planner.plan_j(start_pose, execute=True)
+
+        if self._verbosity > 0:
+            self.get_logger().info("at start pose. Drawing")
+
+        await self._motion_planner.execute_joint_trajectory(self._cached_joint_traj) # traverse all waypoints
+        if self._verbosity > 0:
+            self.get_logger().info("done drawing")
 
     async def _plot_callback(self, request, response):
         self.get_logger().info("plotting waypoints")
@@ -101,27 +146,7 @@ class RoutePlannerNode(Node):
             self.get_logger().info("No waypoints to draw")
             return response
         
-        dx = self.point_offset.x
-        dy = self.point_offset.y
-        dz = self.point_offset.z
-        
-        offset_waypoints = [(x+dx, y+dy, z+dz) for (x,y,z) in self._draw_waypoints]
-
-        # N = 10
-        # paper_height = 0.174
-        # paper_size = 0.05
-        # paper_origin = [0.4, 0.0, paper_height]
-        # t = np.linspace(0, 2*np.pi, N)
-        # x = paper_size * np.cos(t) + paper_origin[0]
-        # y = paper_size * np.sin(t) + paper_origin[1]
-        # z = np.full_like(x, paper_height)
-        # waypoints = list(zip(x, y, z))
-        self.get_logger().info("going to ready pose")
-
-        # await self._motion_planner.plan_n("ready", execute=True)
-        self.get_logger().info("at ready pose. drawing image")
-        await self._execute_waypoints(offset_waypoints)
-        self.get_logger().info("done drawing image")
+        await self._execute_traj()
         return response
     
     def _route_callback(self, request, response):
@@ -138,24 +163,40 @@ class RoutePlannerNode(Node):
         pen_up_dists, robot_xyz_waypoints = tour_to_robot_waypoints(lines,
                                                                     stroke_segments,
                                                                     tour,
-                                                                    paper_width=0.2,
-                                                                    paper_height=0.2,
+                                                                    paper_width=1.0,
+                                                                    paper_height=1.0,
                                                                     xoffset=0.0,
                                                                     yoffset=0.0,
                                                                     paper_height_fn=self.paper_height_model.get_paper_height,
-                                                                    pen_clearance=0.01)
+                                                                    pen_clearance=self.pen_clearance,)
         self._draw_waypoints = robot_xyz_waypoints
+        self._update_joint_traj()
 
-        pen_up_dist = sum(pen_up_dists)
-        total_distance = pen_down_dist + pen_up_dist
-        
-        self.get_logger().info(f"Received {len(lines)} lines")
-        self.get_logger().info(f"Total distance: {total_distance}")
-        self.get_logger().info(f"Pen down distance: {pen_down_dist} ({100 * pen_down_dist/total_distance:.2f}% of total)")
-        self.get_logger().info(f"Pen up distance: {pen_up_dist} ({100 * pen_up_dist/total_distance:.2f}% of total)")
-        self.get_logger().info(f"draw waypoints: { self._draw_waypoints}") 
+        if self._verbosity > 0:
+            pen_up_dist = sum(pen_up_dists)
+            total_distance = pen_down_dist + pen_up_dist
+            
+            self.get_logger().info(f"Received {len(lines)} lines")
+            self.get_logger().info(f"Total distance: {total_distance}")
+            self.get_logger().info(f"Pen down distance: {pen_down_dist} ({100 * pen_down_dist/total_distance:.2f}% of total)")
+            self.get_logger().info(f"Pen up distance: {pen_up_dist} ({100 * pen_up_dist/total_distance:.2f}% of total)")
         return response
     
+    async def _outline_paper(self, request, response):
+        joint_traj = self._waypoints_to_joint_traj([(0,0,self.pen_clearance),
+                                                    (0,1,self.pen_clearance),
+                                                    (1,1,self.pen_clearance),
+                                                    (1,0,self.pen_clearance),
+                                                    (0,0,self.pen_clearance)])
+        
+        start_pose = self._cached_joint_traj.positions[0]
+        start_pose = JointState()
+        start_pose.name = self._cached_joint_traj.joint_names
+        start_pose.position = self._cached_joint_traj.positions[0]
+        await self._motion_planner.plan_j(start_pose, execute=True)
+
+        await self._motion_planner.execute_joint_trajectory(joint_traj)
+        
     async def _test_line(self, request, response):
         # await self._motion_planner.plan_n('ready', execute=True)
         pose = Pose()
