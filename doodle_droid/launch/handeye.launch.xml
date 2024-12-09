@@ -1,9 +1,10 @@
 <launch>
     <arg name="apriltag_params" default="config/apriltag_params.yaml" description="path to AprilTag parameters relative to share directory" />
 
-  <!-- (start your robot's MoveIt! stack, e.g. include its moveit_planning_execution.launch.py) -->
+    <!-- (start your tracking system's ROS driver) -->
 
-  <!-- (start your tracking system's ROS driver) -->
+    <include file="$(find-pkg-share realsense2_camera)/launch/rs_launch.py"/>   
+
     <node
         pkg="apriltag_ros"
         exec="apriltag_node"
@@ -14,18 +15,21 @@
         <param from="$(find-pkg-share doodle_droid)/$(var apriltag_params)" />
     </node>
 
-  <include file="$(find easy_handeye2)/launch/calibrate.launch.py">
-    <arg name="calibration_type" value="eye_in_hand"/>
+    <include file="$(find-pkg-share easy_handeye2)/launch/calibrate.launch.py">
+      <arg name="calibration_type" value="eye_in_hand"/>
 
-    <!-- you can choose any identifier, as long as you use the same for publishing the calibration -->
-    <arg name="name" value="my_eih_calib"/>
+      <!-- you can choose any identifier, as long as you use the same for publishing the calibration -->
+      <arg name="name" value="my_eih_calib"/>
 
-    <!-- fill in the following parameters according to your robot's published tf frames -->
-    <arg name="robot_base_frame" value="/base"/>
-    <arg name="robot_effector_frame" value="/fer_hand"/>
+      <!-- fill in the following parameters according to your robot's published tf frames -->
+      <arg name="robot_base_frame" value="base"/>
+      <arg name="robot_effector_frame" value="fer_hand"/>
 
-    <!-- fill in the following parameters according to your tracking system's published tf frames -->
-    <arg name="tracking_base_frame" value="/camera_color_optical_frame"/>
-    <arg name="tracking_marker_frame" value="/tag"/>
-  </include>
+      <!-- fill in the following parameters according to your tracking system's published tf frames -->
+      <arg name="tracking_base_frame" value="camera_color_optical_frame"/>
+      <arg name="tracking_marker_frame" value="tag"/>
+    </include>
+
+    <node pkg='doodle_droid' exec='calibrator'/>
+
 </launch>

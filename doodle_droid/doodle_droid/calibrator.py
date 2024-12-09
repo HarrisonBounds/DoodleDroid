@@ -22,6 +22,7 @@ from tf2_ros import TransformBroadcaster
 from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
+
 # from tf2_msgs.
 
 from doodle_droid.motion_planner import MotionPlanner
@@ -69,22 +70,58 @@ class Calibrator(Node):
         self.tagsize = 0.1016  # using 4 inch apriltags
 
 
+        # self.static_broadcaster = StaticTransformBroadcaster(self)
+        # world_camera_tf = TransformStamped()
+        # world_camera_tf.header.stamp = self.get_clock().now().to_msg()
+        # world_camera_tf.header.frame_id = 'fer_hand'
+        # world_camera_tf.child_frame_id = 'camera_link'
+        # world_camera_tf.transform.translation.x = 0.05366 # change to match camera mounting
+        # world_camera_tf.transform.translation.y = -0.0193
+        # world_camera_tf.transform.translation.z = 0.0025
+
+        # world_camera_tf.transform.rotation.x = 0.0 # change to match camera mounting
+        # world_camera_tf.transform.rotation.y = -0.7071045
+        # world_camera_tf.transform.rotation.z = 0.0
+        # world_camera_tf.transform.rotation.w = 0.7071045
+
+        # self.static_broadcaster.sendTransform(world_camera_tf)
+
         self.static_broadcaster = StaticTransformBroadcaster(self)
         world_camera_tf = TransformStamped()
         world_camera_tf.header.stamp = self.get_clock().now().to_msg()
         world_camera_tf.header.frame_id = 'fer_hand'
         world_camera_tf.child_frame_id = 'camera_link'
-        world_camera_tf.transform.translation.x = 0.05366 # change to match camera mounting
-        world_camera_tf.transform.translation.y = -0.0193
-        world_camera_tf.transform.translation.z = 0.0025
+        world_camera_tf.transform.translation.x = 0.0705843 # change to match camera mounting
+        world_camera_tf.transform.translation.y = 0.03221955
+        world_camera_tf.transform.translation.z = 0.03738581
 
-        world_camera_tf.transform.rotation.x = 0.0 # change to match camera mounting
-        world_camera_tf.transform.rotation.y = -0.7071045
-        world_camera_tf.transform.rotation.z = 0.0
-        world_camera_tf.transform.rotation.w = 0.7071045
+        world_camera_tf.transform.rotation.x = 0.69695375  # change to match camera mounting
+        world_camera_tf.transform.rotation.y =  0.01201026
+        world_camera_tf.transform.rotation.z = 0.00773378
+        world_camera_tf.transform.rotation.w = -0.71697365
 
         self.static_broadcaster.sendTransform(world_camera_tf)
-        
+
+
+
+        ########## OBTAINED FROM HAND EYE CALIBRATION
+        # self.static_broadcaster = StaticTransformBroadcaster(self)
+        # world_camera_tf = TransformStamped()
+        # world_camera_tf.header.stamp = self.get_clock().now().to_msg()
+        # world_camera_tf.header.frame_id = 'fer_hand'
+        # world_camera_tf.child_frame_id = 'camera_color_optical_frame'
+        # world_camera_tf.transform.translation.x =  0.055954 # change to match camera mounting
+        # world_camera_tf.transform.translation.y = 0.032108
+        # world_camera_tf.transform.translation.z = 0.037019
+
+        # world_camera_tf.transform.rotation.x = 0.008965 # change to match camera mounting
+        # world_camera_tf.transform.rotation.y = -0.007981
+        # world_camera_tf.transform.rotation.z = -0.713568
+        # world_camera_tf.transform.rotation.w = 0.700483
+
+        # self.static_broadcaster.sendTransform(world_camera_tf)
+
+
 
         self.motion_planner = MotionPlanner(self)
         self.in_position = False
@@ -103,7 +140,7 @@ class Calibrator(Node):
 
         """
         # self.get_logger().info("not in position")
-
+        
         if self.in_position and not self.surface_published:
             # self.get_logger().info("IN POSITION")
             if self.current_image is not None:
@@ -129,13 +166,6 @@ class Calibrator(Node):
 
 
 
-                # inches = pose.position.z * 39.3701
-
-                # self.get_logger().info("height is " + str(inches) + " inches")
-
-                # surface = self.create_marker(0, 'surface', 'camera_color_optical_frame', pose, [self.tagsize, self.tagsize, 0.1], [1.0, 1.0, 1.0], 0.5)
-                # self.surface_publisher.publish(surface)
-            
                 except tf2_ros.LookupException as e:
                     # the frames don't exist yet
                     self.get_logger().info(f'Lookup exception: {e}')
@@ -148,110 +178,65 @@ class Calibrator(Node):
                 pass
             # detections = self.detector.detect(gray)
             
-            # detection_num = 0
-            # detected_orientations = []
-            # detected_positions = []
-#             if len(detections)>0: # only look at first detection for now
-#                 for detection in detections:
-#                     corners = np.array(detection['lb-rb-rt-lt'], dtype=np.float32)
-#                     # centers.append(detection['center'])
-                    
-#                     object_points = np.array([
-#                         [-self.tagsize / 2, -self.tagsize / 2, 0],
-#                         [self.tagsize / 2, -self.tagsize / 2, 0],
-#                         [self.tagsize / 2, self.tagsize / 2, 0],
-#                         [-self.tagsize / 2, self.tagsize / 2, 0]
-#                     ], dtype=np.float32)
-
-#                     _, rotation_vector, translation_vector = cv2.solvePnP(object_points, corners, self.camera_matrix, None)
-
-#                     rotation_matrix, _ = cv2.Rodrigues(rotation_vector)
-
-#                     r = R.from_matrix(rotation_matrix)
-#                     quaternion = r.as_quat() 
-
-#                     pose = Pose()
-
-#                     reshaped_vector = translation_vector.reshape(3,)
-#                     pose.position.x = reshaped_vector[0]
-#                     pose.position.y = reshaped_vector[1]
-#                     pose.position.z = reshaped_vector[2]
-
-#                     pose.orientation.x = quaternion[0]
-#                     pose.orientation.y = quaternion[1]
-#                     pose.orientation.z = quaternion[2]
-#                     pose.orientation.w = quaternion[3]
-
-#                     detected_orientations.append(quaternion)
-#                     detected_positions.append(reshaped_vector)
-
-#                     self.surface_pose = pose
-
-#                     surface = self.create_marker(detection_num, 'surface', 'camera', pose, [self.tagsize, self.tagsize, 0.1], [1.0, 1.0, 1.0], 0.5)
-#                     self.surface_publisher.publish(surface)
-
-#                     detection_num += 1
-
-#                 avg_position = np.mean(detected_positions, axis=0) # calculate average position of four april tags (hopefully more accurate)
-#                 self.surface_pose.position.x = avg_position[0]
-#                 self.surface_pose.position.y = avg_position[1]
-#                 self.surface_pose.position.z = avg_position[2]
-                
-
-#                 avg_orientation = np.mean(detected_orientations, axis=0) # calculate average orientation of four april tags (hopefully more accurate)
-#                 avg_orientation /= np.linalg.norm(avg_orientation)
-#                 self.surface_pose.orientation.x = avg_orientation[0]
-#                 self.surface_pose.orientation.y = avg_orientation[1]
-#                 self.surface_pose.orientation.z = avg_orientation[2]
-#                 self.surface_pose.orientation.w = avg_orientation[3]
-
-#                 if len(detected_positions) >= 4:
-#                     sorted_positions = sorted(
-#                         detected_positions,
-#                         key=lambda pt: angle_from_centroid(pt, avg_position)
-# )                        # orders centers as bot left, bot right, top right, top left
-#                     width = distance(sorted_positions[0], sorted_positions[1])
-#                     height = distance(sorted_positions[0], sorted_positions[3])
-
-#                     dims = Vector3()
-#                     dims.x = width
-#                     dims.y = height
-#                     self.drawing_dims_publisher.publish(dims)
-
-#                     cam_surface = TransformStamped()
-#                     cam_surface.header.stamp = self.get_clock().now().to_msg()
-#                     cam_surface.header.frame_id = 'camera'
-#                     cam_surface.child_frame_id = 'surface'
-#                     cam_surface.transform.translation.x = avg_position[0]
-#                     cam_surface.transform.translation.y = avg_position[1]
-#                     cam_surface.transform.translation.z = avg_position[2]
-#                     cam_surface.transform.rotation.x = avg_orientation[0]
-#                     cam_surface.transform.rotation.y = avg_orientation[1]
-#                     cam_surface.transform.rotation.z = avg_orientation[2]
-#                     cam_surface.transform.rotation.w = avg_orientation[3]
-
-#                     self.broadcaster.sendTransform(cam_surface)
-
-#                     surface = self.create_marker(999, 'surface', 'camera', self.surface_pose, [height-self.tagsize/2, width-self.tagsize/2, 0.1], [0.0, 1.0, 1.0], 1.0)
-#                     self.surface_publisher.publish(surface)
+       
     
     async def calibrate_callback(self,request, response):
         # z = 0.188
-        start1 = Pose()
-        start1.position = Point(x=0.45, y=0.05, z=0.75)
-  
-        start1.orientation = Quaternion(x=0.9238792,
-                                        y=-0.3826833,
-                                        z=0.0003047,
-                                        w=0.0007357)
-        result, status = await self.motion_planner.plan_p(start1.position,start1.orientation,execute=True)
 
-        self.motion_planner.print_status(status)
-        # while status != GoalStatus.STATUS_SUCCEEDED:
-        #     self.get_logger().info('planning step 1')
-        #     # self.motion_planner.print_status(status)
-        #     pass
-        self.in_position = True
+
+        try:
+            cam_optical_tf = self.buffer.lookup_transform('camera_color_optical_frame', 'camera_link', rclpy.time.Time())
+            pose = Pose()
+            pose.position.x = cam_optical_tf.transform.translation.x
+            pose.position.y = cam_optical_tf.transform.translation.y
+            pose.position.z = cam_optical_tf.transform.translation.z
+            pose.orientation = cam_optical_tf.transform.rotation
+
+            self.get_logger().info("x " + str(cam_optical_tf.transform.translation.x) )
+            self.get_logger().info("y " + str(cam_optical_tf.transform.translation.y) )
+            self.get_logger().info("z " + str(cam_optical_tf.transform.translation.z) )
+            self.get_logger().info("\n")
+
+
+            self.get_logger().info("x " + str(cam_optical_tf.transform.rotation.x) )
+            self.get_logger().info("y " + str(cam_optical_tf.transform.rotation.y) )
+            self.get_logger().info("z " + str(cam_optical_tf.transform.rotation.z) )
+            self.get_logger().info("w " + str(cam_optical_tf.transform.rotation.w) )
+            self.get_logger().info("\n")
+
+            self.surface_pose_publisher.publish(pose)
+            self.surface_published = True
+
+
+
+
+        except tf2_ros.LookupException as e:
+            # the frames don't exist yet
+            self.get_logger().info(f'Lookup exception: {e}')
+        except tf2_ros.ConnectivityException as e:
+            # the tf tree has a disconnection
+            self.get_logger().info(f'Connectivity exception: {e}')
+        except tf2_ros.ExtrapolationException as e:
+            # the times are two far apart to extrapolate
+            self.get_logger().info(f'Extrapolation exception: {e}')
+        pass
+
+
+        # start1 = Pose()
+        # start1.position = Point(x=0.45, y=0.05, z=0.75)
+  
+        # start1.orientation = Quaternion(x=0.9238792,
+        #                                 y=-0.3826833,
+        #                                 z=0.0003047,
+        #                                 w=0.0007357)
+        # result, status = await self.motion_planner.plan_p(start1.position,start1.orientation,execute=True)
+
+        # self.motion_planner.print_status(status)
+        # # while status != GoalStatus.STATUS_SUCCEEDED:
+        # #     self.get_logger().info('planning step 1')
+        # #     # self.motion_planner.print_status(status)
+        # #     pass
+        # self.in_position = True
 
 
         return response

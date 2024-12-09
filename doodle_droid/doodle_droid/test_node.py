@@ -47,34 +47,34 @@ class TestNode(Node):
         # else:
         #     self.get_logger().info("Failed to get end effector pose.")
         
-        z = 0.3
+        z = 0.166
         start1 = Pose()
-        start1.position = Point(x=0.25, y=0.05, z=z)
+        start1.position = Point(x=0.315211, y=0.0526, z=z)
         start1.orientation = Quaternion(x=0.9238792,
                                         y=-0.3826833,
                                         z=0.0003047,
                                         w=0.0007357)
         await self._motion_planner.plan_c(start1, execute=True)
 
-        end1 = Pose()
-        end1.position = Point(x=0.25, y=-0.05, z=z)
-        end1.orientation = Quaternion(x=0.9238792,
-                                      y=-0.3826833,
-                                      z=0.0003047,
-                                      w=0.0007357)
-        waypoints = self.construct_line_waypoints(start1, end1, 10)
-        await self._motion_planner.execute_waypoints(waypoints, 1.0)
+        # end1 = Pose()
+        # end1.position = Point(x=0.25, y=-0.05, z=z)
+        # end1.orientation = Quaternion(x=0.9238792,
+        #                               y=-0.3826833,
+        #                               z=0.0003047,
+        #                               w=0.0007357)
+        # waypoints = self.construct_line_waypoints(start1, end1, 10)
+        # await self._motion_planner.execute_waypoints(waypoints, 1.0)
 
-        time.sleep(1)
+        # time.sleep(1)
 
-        start2 = end1
-        start2.position.x = start2.position.x + 0.1
-        start2.position.z = start2.position.z - 0.001
-        end2 = start1
-        end2.position.x = end2.position.x + 0.1
-        end2.position.z = start2.position.z - 0.001
-        waypoints = self.construct_line_waypoints(start2, end2, 10)
-        await self._motion_planner.execute_waypoints(waypoints, 0.5)
+        # start2 = end1
+        # start2.position.x = start2.position.x + 0.1
+        # start2.position.z = start2.position.z - 0.001
+        # end2 = start1
+        # end2.position.x = end2.position.x + 0.1
+        # end2.position.z = start2.position.z - 0.001
+        # waypoints = self.construct_line_waypoints(start2, end2, 10)
+        # await self._motion_planner.execute_waypoints(waypoints, 0.5)
 
         return response
 
