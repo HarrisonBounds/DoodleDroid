@@ -4,7 +4,9 @@
 
     <arg name="apriltag_params" default="config/apriltag_params.yaml" description="path to AprilTag parameters relative to share directory" />
 
-    <include file="$(find-pkg-share realsense2_camera)/launch/rs_launch.py"/>   
+    <include file="$(find-pkg-share realsense2_camera)/launch/rs_launch.py">
+        <arg name="pointcloud.enable" value="false"/>
+    </include>   
 
     <node
         pkg="apriltag_ros"

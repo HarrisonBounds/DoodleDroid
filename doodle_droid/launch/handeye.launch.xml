@@ -15,6 +15,8 @@
         <param from="$(find-pkg-share doodle_droid)/$(var apriltag_params)" />
     </node>
 
+    <!-- <include file="$(find-pkg-share doodle_droid)/launch/aruco.launch.py"/>    -->
+
     <include file="$(find-pkg-share easy_handeye2)/launch/calibrate.launch.py">
       <arg name="calibration_type" value="eye_in_hand"/>
 

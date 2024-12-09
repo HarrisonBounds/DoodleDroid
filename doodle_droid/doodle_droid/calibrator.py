@@ -67,8 +67,22 @@ class Calibrator(Node):
         self.current_image = None
         self.surface_pose = None
 
+        self.pose = Pose()
+        self.pose_determined = False
+
         self.tagsize = 0.1016  # using 4 inch apriltags
 
+
+        self.static_broadcaster = StaticTransformBroadcaster(self)
+        base_aruco_tf = TransformStamped()
+        base_aruco_tf.header.stamp = self.get_clock().now().to_msg()
+        base_aruco_tf.header.frame_id = 'base'
+        base_aruco_tf.child_frame_id = 'tag'
+        base_aruco_tf.transform.translation.x = 0.5 # change to match camera mounting
+        base_aruco_tf.transform.translation.y = -0.0193
+        base_aruco_tf.transform.translation.z = 0.0025
+
+        self.static_broadcaster.sendTransform(base_aruco_tf)
 
         ##### MAGIC NUMBERS
         # self.static_broadcaster = StaticTransformBroadcaster(self)
@@ -87,6 +101,7 @@ class Calibrator(Node):
 
         # self.static_broadcaster.sendTransform(world_camera_tf)
 
+        ###### FROM FIRST CALIBRATION
         self.static_broadcaster = StaticTransformBroadcaster(self)
         world_camera_tf = TransformStamped()
         world_camera_tf.header.stamp = self.get_clock().now().to_msg()
@@ -103,6 +118,26 @@ class Calibrator(Node):
         world_camera_tf.transform.rotation.w = 0.6969538189625948
 
         self.static_broadcaster.sendTransform(world_camera_tf)
+
+
+
+        ###### FROM SECOND CALIBRATION
+        # self.static_broadcaster = StaticTransformBroadcaster(self)
+        # world_camera_tf = TransformStamped()
+        # world_camera_tf.header.stamp = self.get_clock().now().to_msg()
+        # world_camera_tf.header.frame_id = 'fer_hand'
+        # world_camera_tf.child_frame_id = 'camera_link'
+        # world_camera_tf.transform.translation.x = 0.055028777125317
+        # world_camera_tf.transform.translation.y = 0.029882379243842145
+        # world_camera_tf.transform.translation.z = -0.00941380282518792
+
+
+        # world_camera_tf.transform.rotation.x = 0.0006396332923727104
+        # world_camera_tf.transform.rotation.y =  -0.7176472657602566
+        # world_camera_tf.transform.rotation.z = -0.0058883287003417455
+        # world_camera_tf.transform.rotation.w = 0.6963815910843678
+
+        # self.static_broadcaster.sendTransform(world_camera_tf)
 
 
 
@@ -124,7 +159,7 @@ class Calibrator(Node):
 
         # self.static_broadcaster.sendTransform(ee_camcal)
 
-        ### FOR DETERMINING CAMERA_LINK TF
+        ## FOR DETERMINING CAMERA_LINK TF
         # self.static_broadcaster = StaticTransformBroadcaster(self)
         # cal_link = TransformStamped()
         # cal_link.header.stamp = self.get_clock().now().to_msg()
@@ -142,12 +177,42 @@ class Calibrator(Node):
         # self.static_broadcaster.sendTransform(cal_link)
 
 
+        # # Translation
+        # #     x: 0.055039
+        # #     y: 0.044515
+        # #     z: -0.009710)
+        # # Rotation
+        # #     x: 0.008990
+        # #     y: -0.009253
+        # #     z: -0.707112
+        # #     w: 0.706984
+        # ######### OBTAINED FROM HAND EYE CALIBRATION
+        # self.static_broadcaster = StaticTransformBroadcaster(self)
+        # ee_camcal = TransformStamped()
+        # ee_camcal.header.stamp = self.get_clock().now().to_msg()
+        # ee_camcal.header.frame_id = 'fer_hand'
+        # # ee_camcal.child_frame_id = 'camera_color_optical_frame'
+        # ee_camcal.child_frame_id = 'calibrated'
+        # ee_camcal.transform.translation.x =  0.055039 # change to match camera mounting
+        # ee_camcal.transform.translation.y = 0.044515
+        # ee_camcal.transform.translation.z = -0.009710
+
+        # ee_camcal.transform.rotation.x = 0.008990    # change to match camera mounting
+        # ee_camcal.transform.rotation.y = -0.009253
+        # ee_camcal.transform.rotation.z = -0.707112
+        # ee_camcal.transform.rotation.w = 0.706984
+
+        # self.static_broadcaster.sendTransform(ee_camcal)
+
+
 
         self.motion_planner = MotionPlanner(self)
         self.in_position = False
         self.surface_published = False
 
         self.calibrate_server = self.create_service(Empty, "calibrate", self.calibrate_callback)
+
+        self.test_calibrate_server = self.create_service(Empty, "test_calibrate", self.test_calibrate_callback)
 
 
         self.get_logger().info("calibrator initialized")
@@ -160,42 +225,42 @@ class Calibrator(Node):
 
         """
         # self.get_logger().info("not in position")
-        
-        if self.in_position and not self.surface_published:
-            # self.get_logger().info("IN POSITION")
-            if self.current_image is not None:
-                # cv_image = self.bridge.compressed_imgmsg_to_cv2(self.current_image, desired_encoding='passthrough')
-                # gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
+        pass
+        # if self.in_position and not self.surface_published:
+        #     # self.get_logger().info("IN POSITION")
+        #     if self.current_image is not None:
+        #         # cv_image = self.bridge.compressed_imgmsg_to_cv2(self.current_image, desired_encoding='passthrough')
+        #         # gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
                 
-                try:
-                    base_tag_tf = self.buffer.lookup_transform('base', 'tag', rclpy.time.Time())
-                    pose = Pose()
-                    pose.position.x = base_tag_tf.transform.translation.x
-                    pose.position.y = base_tag_tf.transform.translation.y
-                    pose.position.z = base_tag_tf.transform.translation.z
-                    pose.orientation = base_tag_tf.transform.rotation
+        #         try:
+        #             base_tag_tf = self.buffer.lookup_transform('base', 'tag', rclpy.time.Time())
+        #             pose = Pose()
+        #             pose.position.x = base_tag_tf.transform.translation.x
+        #             pose.position.y = base_tag_tf.transform.translation.y
+        #             pose.position.z = base_tag_tf.transform.translation.z
+        #             pose.orientation = base_tag_tf.transform.rotation
 
-                    self.get_logger().info("x " + str(base_tag_tf.transform.translation.x) )
-                    self.get_logger().info("y " + str(base_tag_tf.transform.translation.y) )
-                    self.get_logger().info("z " + str(base_tag_tf.transform.translation.z) )
-                    self.get_logger().info("\n")
+        #             self.get_logger().info("x " + str(base_tag_tf.transform.translation.x) )
+        #             self.get_logger().info("y " + str(base_tag_tf.transform.translation.y) )
+        #             self.get_logger().info("z " + str(base_tag_tf.transform.translation.z) )
+        #             self.get_logger().info("\n")
 
-                    self.surface_pose_publisher.publish(pose)
-                    self.surface_published = True
-
-
+        #             self.surface_pose_publisher.publish(pose)
+        #             self.surface_published = True
 
 
-                except tf2_ros.LookupException as e:
-                    # the frames don't exist yet
-                    self.get_logger().info(f'Lookup exception: {e}')
-                except tf2_ros.ConnectivityException as e:
-                    # the tf tree has a disconnection
-                    self.get_logger().info(f'Connectivity exception: {e}')
-                except tf2_ros.ExtrapolationException as e:
-                    # the times are two far apart to extrapolate
-                    self.get_logger().info(f'Extrapolation exception: {e}')
-                pass
+
+
+        #         except tf2_ros.LookupException as e:
+        #             # the frames don't exist yet
+        #             self.get_logger().info(f'Lookup exception: {e}')
+        #         except tf2_ros.ConnectivityException as e:
+        #             # the tf tree has a disconnection
+        #             self.get_logger().info(f'Connectivity exception: {e}')
+        #         except tf2_ros.ExtrapolationException as e:
+        #             # the times are two far apart to extrapolate
+        #             self.get_logger().info(f'Extrapolation exception: {e}')
+        #         pass
             # detections = self.detector.detect(gray)
             
        
@@ -204,42 +269,42 @@ class Calibrator(Node):
         # z = 0.188
 
 
-        try:
-            cam_optical_tf = self.buffer.lookup_transform('camera_color_optical_frame', 'camera_link', rclpy.time.Time())
-            pose = Pose()
-            pose.position.x = cam_optical_tf.transform.translation.x
-            pose.position.y = cam_optical_tf.transform.translation.y
-            pose.position.z = cam_optical_tf.transform.translation.z
-            pose.orientation = cam_optical_tf.transform.rotation
+        # try:
+        #     cam_optical_tf = self.buffer.lookup_transform('base','tag', rclpy.time.Time())
+        #     pose = Pose()
+        #     self.pose.position.x = cam_optical_tf.transform.translation.x
+        #     self.pose.position.y = cam_optical_tf.transform.translation.y
+        #     self.pose.position.z = cam_optical_tf.transform.translation.z
+        #     self.pose.orientation = cam_optical_tf.transform.rotation
 
-            self.get_logger().info("x " + str(cam_optical_tf.transform.translation.x) )
-            self.get_logger().info("y " + str(cam_optical_tf.transform.translation.y) )
-            self.get_logger().info("z " + str(cam_optical_tf.transform.translation.z) )
-            self.get_logger().info("\n")
-
-
-            self.get_logger().info("x " + str(cam_optical_tf.transform.rotation.x) )
-            self.get_logger().info("y " + str(cam_optical_tf.transform.rotation.y) )
-            self.get_logger().info("z " + str(cam_optical_tf.transform.rotation.z) )
-            self.get_logger().info("w " + str(cam_optical_tf.transform.rotation.w) )
-            self.get_logger().info("\n")
-
-            self.surface_pose_publisher.publish(pose)
-            self.surface_published = True
+        #     self.get_logger().info("x " + str(cam_optical_tf.transform.translation.x) )
+        #     self.get_logger().info("y " + str(cam_optical_tf.transform.translation.y) )
+        #     self.get_logger().info("z " + str(cam_optical_tf.transform.translation.z) )
+        #     self.get_logger().info("\n")
 
 
+        #     self.get_logger().info("x " + str(cam_optical_tf.transform.rotation.x) )
+        #     self.get_logger().info("y " + str(cam_optical_tf.transform.rotation.y) )
+        #     self.get_logger().info("z " + str(cam_optical_tf.transform.rotation.z) )
+        #     self.get_logger().info("w " + str(cam_optical_tf.transform.rotation.w) )
+        #     self.get_logger().info("\n")
+
+        #     self.surface_pose_publisher.publish(self.pose)
+        #     self.surface_published = True
 
 
-        except tf2_ros.LookupException as e:
-            # the frames don't exist yet
-            self.get_logger().info(f'Lookup exception: {e}')
-        except tf2_ros.ConnectivityException as e:
-            # the tf tree has a disconnection
-            self.get_logger().info(f'Connectivity exception: {e}')
-        except tf2_ros.ExtrapolationException as e:
-            # the times are two far apart to extrapolate
-            self.get_logger().info(f'Extrapolation exception: {e}')
-        pass
+
+
+        # except tf2_ros.LookupException as e:
+        #     # the frames don't exist yet
+        #     self.get_logger().info(f'Lookup exception: {e}')
+        # except tf2_ros.ConnectivityException as e:
+        #     # the tf tree has a disconnection
+        #     self.get_logger().info(f'Connectivity exception: {e}')
+        # except tf2_ros.ExtrapolationException as e:
+        #     # the times are two far apart to extrapolate
+        #     self.get_logger().info(f'Extrapolation exception: {e}')
+        # pass
 
 
         # start1 = Pose()
@@ -252,14 +317,40 @@ class Calibrator(Node):
         # result, status = await self.motion_planner.plan_p(start1.position,start1.orientation,execute=True)
 
         # self.motion_planner.print_status(status)
-        # # while status != GoalStatus.STATUS_SUCCEEDED:
-        # #     self.get_logger().info('planning step 1')
-        # #     # self.motion_planner.print_status(status)
-        # #     pass
-        # self.in_position = True
+
+        self.in_position = True
 
 
         return response
+
+
+    async def test_calibrate_callback(self,request, response):
+        # if self.pose_determined:
+
+        self.get_logger().info("x " + str(self.pose.position.x) )
+        self.get_logger().info("y " + str(self.pose.position.y) )
+        self.get_logger().info("z " + str(self.pose.position.z) )
+        self.get_logger().info("\n")
+
+
+        self.get_logger().info("x " + str(self.pose.orientation.x) )
+        self.get_logger().info("y " + str(self.pose.orientation.y) )
+        self.get_logger().info("z " + str(self.pose.orientation.z) )
+        self.get_logger().info("w " + str(self.pose.orientation.w) )
+        self.get_logger().info("\n")
+    
+        move_position = self.pose.position
+        move_position.z += 0.185
+
+        move_orientation = Quaternion(x=0.9238792,
+                                y=-0.3826833,
+                                z=0.0003047,
+                                w=0.0007357)
+        result, status = await self.motion_planner.plan_p(move_position,move_orientation,execute=True)
+
+  
+        return response
+
 
 
     def get_image_callback(self, msg):
