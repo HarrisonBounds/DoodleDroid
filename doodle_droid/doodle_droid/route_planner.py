@@ -68,6 +68,8 @@ class RoutePlannerNode(Node):
 
     def _paper_size_callback(self, msg):
         self.paper_size = msg
+        self._update_joint_traj()
+
 
     def _update_offset(self, msg):
         self.point_offset = msg
