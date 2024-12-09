@@ -11,16 +11,18 @@ from doodle_droid.linedraw.util import *
 
 from ament_index_python.packages import get_package_share_directory
 
+import webbrowser
+
 pkg_name = "doodle_droid"
 pkg_share = get_package_share_directory(pkg_name)
 export_path = f"{pkg_share}/images/output.svg"
 no_cv = False
 draw_contours = True
-draw_hatch = False
+draw_hatch = True
 show_bitmap = False
 resolution = 1024
 hatch_size = 16
-contour_simplify = 3
+contour_simplify = 2
 
 try:
     import numpy as np
@@ -208,6 +210,8 @@ def sketch(path):
     f.close()
     print(len(lines),"strokes.")
     print("done.")
+    
+    webbrowser.open(export_path)
     return lines
 
 

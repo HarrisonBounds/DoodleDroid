@@ -29,7 +29,7 @@ class ImageProcessingNode(Node):
         # self.path = f"{self.pkg_share}/images/my_smiley.jpeg"
         self.path = f"{self.pkg_share}/images/matt.png"
         self.bridge = CvBridge()
-        self.from_file = True
+        self.from_file = False
         
         self.get_logger().info(f"SELF.PS: {self.pkg_share}")
         self.get_logger().info(f"SELF.PATH: {self.path}")
@@ -40,6 +40,9 @@ class ImageProcessingNode(Node):
     def capture_image(self, request, response):
         if not self.from_file:
             cv_image = self.bridge.compressed_imgmsg_to_cv2(self.current_image, desired_encoding='passthrough')
+            cv.imshow("Raw Image", cv_image)
+            cv.waitKey(1) 
+            
             self.get_logger().info(f"cv image type: {type(cv_image)}")
             lined_image = doodle_droid.linedraw.linedraw.sketch(cv_image)
             
@@ -49,11 +52,16 @@ class ImageProcessingNode(Node):
         else:
             image = cv.imread(self.path)
             image_array = np.array(image)
+            cv.imshow("Raw Image", image)
+            cv.waitKey(1) 
+            
             lined_image = doodle_droid.linedraw.linedraw.sketch(image_array)
             self.get_logger().info(f"Number of strokes: {len(lined_image)} ")
             
             self.get_logger().info(f"Number of strokes: {len(lined_image)} ")
             self.get_logger().info("Finished processing")
+            
+        
             
         self.get_logger().info(f"lined image: {lined_image}")
             
