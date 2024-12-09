@@ -70,6 +70,7 @@ class Calibrator(Node):
         self.tagsize = 0.1016  # using 4 inch apriltags
 
 
+        ##### MAGIC NUMBERS
         # self.static_broadcaster = StaticTransformBroadcaster(self)
         # world_camera_tf = TransformStamped()
         # world_camera_tf.header.stamp = self.get_clock().now().to_msg()
@@ -91,14 +92,14 @@ class Calibrator(Node):
         world_camera_tf.header.stamp = self.get_clock().now().to_msg()
         world_camera_tf.header.frame_id = 'fer_hand'
         world_camera_tf.child_frame_id = 'camera_link'
-        world_camera_tf.transform.translation.x = 0.0705843 # change to match camera mounting
-        world_camera_tf.transform.translation.y = 0.03221955
-        world_camera_tf.transform.translation.z = 0.03738581
+        world_camera_tf.transform.translation.x = -0.01751038# change to match camera mounting
+        world_camera_tf.transform.translation.y = 0.03731347
+        world_camera_tf.transform.translation.z = -0.05544694
 
-        world_camera_tf.transform.rotation.x = 0.69695375  # change to match camera mounting
-        world_camera_tf.transform.rotation.y =  0.01201026
-        world_camera_tf.transform.rotation.z = 0.00773378
-        world_camera_tf.transform.rotation.w = -0.71697365
+        world_camera_tf.transform.rotation.x = 0.00106468  # change to match camera mounting
+        world_camera_tf.transform.rotation.y =  0.69706528
+        world_camera_tf.transform.rotation.z = -0.0068949
+        world_camera_tf.transform.rotation.w = 0.71697372
 
         self.static_broadcaster.sendTransform(world_camera_tf)
 
