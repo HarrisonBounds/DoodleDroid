@@ -26,6 +26,7 @@ from tf2_ros.transform_listener import TransformListener
 # from tf2_msgs.
 
 from doodle_droid.motion_planner import MotionPlanner
+from doodle_droid.robot_state import RobotState
 from std_srvs.srv import Empty
 from action_msgs.msg import GoalStatus
 
@@ -67,6 +68,8 @@ class Calibrator(Node):
         self.current_image = None
         self.surface_pose = None
 
+        self.positions = []
+        self.orientations = []
         self.pose = Pose()
         self.pose_determined = False
 
@@ -113,7 +116,7 @@ class Calibrator(Node):
 
 
         world_camera_tf.transform.rotation.x = -0.005235918751358316
-        world_camera_tf.transform.rotation.y =  -0.7169794461515647
+        world_camera_tf.transform.rotation.y = -0.7169794461515647
         world_camera_tf.transform.rotation.z = -0.01297818109286954
         world_camera_tf.transform.rotation.w = 0.6969538189625948
 
@@ -207,11 +210,12 @@ class Calibrator(Node):
 
 
         self.motion_planner = MotionPlanner(self)
+        self.robot_state = RobotState(self)
         self.in_position = False
         self.surface_published = False
 
         self.calibrate_server = self.create_service(Empty, "calibrate", self.calibrate_callback)
-
+        self.manual_calibrate_server = self.create_service(Empty, "manual_calibrate", self.manual_calibrate_callback)
         self.test_calibrate_server = self.create_service(Empty, "test_calibrate", self.test_calibrate_callback)
 
 
@@ -226,45 +230,62 @@ class Calibrator(Node):
         """
         # self.get_logger().info("not in position")
         pass
-        # if self.in_position and not self.surface_published:
-        #     # self.get_logger().info("IN POSITION")
-        #     if self.current_image is not None:
-        #         # cv_image = self.bridge.compressed_imgmsg_to_cv2(self.current_image, desired_encoding='passthrough')
-        #         # gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
+        if self.in_position and not self.surface_published:
+            # self.get_logger().info("IN POSITION")
+            if self.current_image is not None:
+                # cv_image = self.bridge.compressed_imgmsg_to_cv2(self.current_image, desired_encoding='passthrough')
+                # gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
+                try:
+                    base_tag_tf = self.buffer.lookup_transform('base', 'tag', rclpy.time.Time())
+                    pose = Pose()
+                    pose.position.x = base_tag_tf.transform.translation.x
+                    pose.position.y = base_tag_tf.transform.translation.y
+                    pose.position.z = base_tag_tf.transform.translation.z
+                    pose.orientation = base_tag_tf.transform.rotation
+
+                    self.positions.append(np.array([pose.position.x, pose.position.y, pose.position.z]))
+                    self.orientations.append(np.array([pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w]))
+
+                    self.surface_pose_publisher.publish(pose)
+
+                    if len(self.positions) == 30:
+
+                        pose = Pose()
+
+                        avg_position = np.mean(self.positions, axis=0) # calculate average position of four april tags (hopefully more accurate)
+                        self.pose.position.x = avg_position[0]
+                        self.pose.position.y = avg_position[1]
+                        self.pose.position.z = avg_position[2]
                 
-        #         try:
-        #             base_tag_tf = self.buffer.lookup_transform('base', 'tag', rclpy.time.Time())
-        #             pose = Pose()
-        #             pose.position.x = base_tag_tf.transform.translation.x
-        #             pose.position.y = base_tag_tf.transform.translation.y
-        #             pose.position.z = base_tag_tf.transform.translation.z
-        #             pose.orientation = base_tag_tf.transform.rotation
-
-        #             self.get_logger().info("x " + str(base_tag_tf.transform.translation.x) )
-        #             self.get_logger().info("y " + str(base_tag_tf.transform.translation.y) )
-        #             self.get_logger().info("z " + str(base_tag_tf.transform.translation.z) )
-        #             self.get_logger().info("\n")
-
-        #             self.surface_pose_publisher.publish(pose)
-        #             self.surface_published = True
 
 
+                        avg_orientation = np.mean(self.orientations, axis=0) # calculate average orientation of four april tags (hopefully more accurate)
+                        avg_orientation /= np.linalg.norm(avg_orientation)
+                        self.pose.orientation.x = avg_orientation[0]
+                        self.pose.orientation.y = avg_orientation[1]
+                        self.pose.orientation.z = avg_orientation[2]
+                        self.pose.orientation.w = avg_orientation[3]
 
+                        self.get_logger().info("x " + str(self.pose.position.x) )
+                        self.get_logger().info("y " + str(self.pose.position.y) )
+                        self.get_logger().info("z " + str(self.pose.position.z) )
+                        self.get_logger().info("\n")
 
-        #         except tf2_ros.LookupException as e:
-        #             # the frames don't exist yet
-        #             self.get_logger().info(f'Lookup exception: {e}')
-        #         except tf2_ros.ConnectivityException as e:
-        #             # the tf tree has a disconnection
-        #             self.get_logger().info(f'Connectivity exception: {e}')
-        #         except tf2_ros.ExtrapolationException as e:
-        #             # the times are two far apart to extrapolate
-        #             self.get_logger().info(f'Extrapolation exception: {e}')
-        #         pass
-            # detections = self.detector.detect(gray)
+                        self.surface_pose_publisher.publish(self.pose)
+                        self.surface_published = True
+
+                except tf2_ros.LookupException as e:
+                    # the frames don't exist yet
+                    self.get_logger().info(f'Lookup exception: {e}')
+                except tf2_ros.ConnectivityException as e:
+                    # the tf tree has a disconnection
+                    self.get_logger().info(f'Connectivity exception: {e}')
+                except tf2_ros.ExtrapolationException as e:
+                    # the times are two far apart to extrapolate
+                    self.get_logger().info(f'Extrapolation exception: {e}')
+                pass
             
        
-    
     async def calibrate_callback(self,request, response):
         # z = 0.188
 
@@ -319,34 +340,40 @@ class Calibrator(Node):
         # self.motion_planner.print_status(status)
 
         self.in_position = True
-
+        self.surface_published = False
+        self.positions = []
+        self.orientations = []
 
         return response
 
 
     async def test_calibrate_callback(self,request, response):
         # if self.pose_determined:
-
-        self.get_logger().info("x " + str(self.pose.position.x) )
-        self.get_logger().info("y " + str(self.pose.position.y) )
-        self.get_logger().info("z " + str(self.pose.position.z) )
-        self.get_logger().info("\n")
-
-
-        self.get_logger().info("x " + str(self.pose.orientation.x) )
-        self.get_logger().info("y " + str(self.pose.orientation.y) )
-        self.get_logger().info("z " + str(self.pose.orientation.z) )
-        self.get_logger().info("w " + str(self.pose.orientation.w) )
-        self.get_logger().info("\n")
     
         move_position = self.pose.position
-        move_position.z += 0.185
+        # move_position.z += 0.185
+        move_position.z += 0.4
 
         move_orientation = Quaternion(x=0.9238792,
                                 y=-0.3826833,
                                 z=0.0003047,
                                 w=0.0007357)
         result, status = await self.motion_planner.plan_p(move_position,move_orientation,execute=True)
+
+  
+        return response
+    
+
+    async def manual_calibrate_callback(self,request, response):
+        # if self.pose_determined:
+    
+        self.pose = await self.robot_state.get_ee_pose()
+
+
+        self.get_logger().info("x " + str(self.pose.position.x) )
+        self.get_logger().info("y " + str(self.pose.position.y) )
+        self.get_logger().info("z " + str(self.pose.position.z) )
+        self.get_logger().info("\n")
 
   
         return response
