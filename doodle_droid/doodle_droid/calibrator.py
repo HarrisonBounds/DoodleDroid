@@ -76,16 +76,16 @@ class Calibrator(Node):
         self.tagsize = 0.1016  # using 4 inch apriltags
 
 
-        self.static_broadcaster = StaticTransformBroadcaster(self)
-        base_aruco_tf = TransformStamped()
-        base_aruco_tf.header.stamp = self.get_clock().now().to_msg()
-        base_aruco_tf.header.frame_id = 'base'
-        base_aruco_tf.child_frame_id = 'tag'
-        base_aruco_tf.transform.translation.x = 0.5 # change to match camera mounting
-        base_aruco_tf.transform.translation.y = -0.0193
-        base_aruco_tf.transform.translation.z = 0.0025
+        # self.static_broadcaster = StaticTransformBroadcaster(self)
+        # base_aruco_tf = TransformStamped()
+        # base_aruco_tf.header.stamp = self.get_clock().now().to_msg()
+        # base_aruco_tf.header.frame_id = 'base'
+        # base_aruco_tf.child_frame_id = 'tag'
+        # base_aruco_tf.transform.translation.x = 0.5 # change to match camera mounting
+        # base_aruco_tf.transform.translation.y = -0.0193
+        # base_aruco_tf.transform.translation.z = 0.0025
 
-        self.static_broadcaster.sendTransform(base_aruco_tf)
+        # self.static_broadcaster.sendTransform(base_aruco_tf)
 
         ##### MAGIC NUMBERS
         # self.static_broadcaster = StaticTransformBroadcaster(self)
