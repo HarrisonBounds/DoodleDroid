@@ -124,26 +124,6 @@ class Calibrator(Node):
 
 
 
-        ###### FROM SECOND CALIBRATION
-        # self.static_broadcaster = StaticTransformBroadcaster(self)
-        # world_camera_tf = TransformStamped()
-        # world_camera_tf.header.stamp = self.get_clock().now().to_msg()
-        # world_camera_tf.header.frame_id = 'fer_hand'
-        # world_camera_tf.child_frame_id = 'camera_link'
-        # world_camera_tf.transform.translation.x = 0.055028777125317
-        # world_camera_tf.transform.translation.y = 0.029882379243842145
-        # world_camera_tf.transform.translation.z = -0.00941380282518792
-
-
-        # world_camera_tf.transform.rotation.x = 0.0006396332923727104
-        # world_camera_tf.transform.rotation.y =  -0.7176472657602566
-        # world_camera_tf.transform.rotation.z = -0.0058883287003417455
-        # world_camera_tf.transform.rotation.w = 0.6963815910843678
-
-        # self.static_broadcaster.sendTransform(world_camera_tf)
-
-
-
         ########## OBTAINED FROM HAND EYE CALIBRATION
         # self.static_broadcaster = StaticTransformBroadcaster(self)
         # ee_camcal = TransformStamped()
@@ -178,36 +158,6 @@ class Calibrator(Node):
         # cal_link.transform.rotation.z = 0.4947025076383143
         # cal_link.transform.rotation.w = 0.5031404420952272
         # self.static_broadcaster.sendTransform(cal_link)
-
-
-        # # Translation
-        # #     x: 0.055039
-        # #     y: 0.044515
-        # #     z: -0.009710)
-        # # Rotation
-        # #     x: 0.008990
-        # #     y: -0.009253
-        # #     z: -0.707112
-        # #     w: 0.706984
-        # ######### OBTAINED FROM HAND EYE CALIBRATION
-        # self.static_broadcaster = StaticTransformBroadcaster(self)
-        # ee_camcal = TransformStamped()
-        # ee_camcal.header.stamp = self.get_clock().now().to_msg()
-        # ee_camcal.header.frame_id = 'fer_hand'
-        # # ee_camcal.child_frame_id = 'camera_color_optical_frame'
-        # ee_camcal.child_frame_id = 'calibrated'
-        # ee_camcal.transform.translation.x =  0.055039 # change to match camera mounting
-        # ee_camcal.transform.translation.y = 0.044515
-        # ee_camcal.transform.translation.z = -0.009710
-
-        # ee_camcal.transform.rotation.x = 0.008990    # change to match camera mounting
-        # ee_camcal.transform.rotation.y = -0.009253
-        # ee_camcal.transform.rotation.z = -0.707112
-        # ee_camcal.transform.rotation.w = 0.706984
-
-        # self.static_broadcaster.sendTransform(ee_camcal)
-
-
 
         self.motion_planner = MotionPlanner(self)
         self.robot_state = RobotState(self)
