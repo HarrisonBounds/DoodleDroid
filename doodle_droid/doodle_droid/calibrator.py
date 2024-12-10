@@ -58,7 +58,7 @@ class Calibrator(Node):
         self.surface_publisher = self.create_publisher(Marker, 'surface_marker', 10)
         self.drawing_dims_publisher = self.create_publisher(Vector3, "drawing_dims", 10)
         self.surface_pose_publisher = self.create_publisher(Pose, "surface_pose", 10)
-        self.cam_sub = self.create_subscription(Image, '/camera/camera/color/image_raw', self.get_image_callback, 10)
+        self.cam_sub = self.create_subscription(Image, 'image_rect', self.get_image_callback, 10)
 
         self.broadcaster = TransformBroadcaster(self)
         self.buffer = Buffer()
