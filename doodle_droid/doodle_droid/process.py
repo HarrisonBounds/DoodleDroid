@@ -15,6 +15,7 @@ from ament_index_python.packages import get_package_share_directory
 import rospkg
 
 
+
 class ImageProcessingNode(Node):
     def __init__(self):
         super().__init__('image_processing_node')
@@ -25,28 +26,63 @@ class ImageProcessingNode(Node):
         self.current_image = None
         self.pkg_name = "doodle_droid"
         self.pkg_share = get_package_share_directory(self.pkg_name)
+
+        self.cascade_path = f'{self.pkg_share}/config/haarcascade_frontalface_default.xml'
+        self.face_cascade = cv2.CascadeClassifier(self.cascade_path)
         
         # self.path = f"{self.pkg_share}/images/my_smiley.jpeg"
-        self.path = f"{self.pkg_share}/images/matt.png"
+        #self.path = f"{self.pkg_share}/images/matt.png"
+        self.path = f"{self.pkg_share}/images/face_image.png"
         # self.path = f"{self.pkg_share}/images/apple.png"
         # self.path = f"{self.pkg_share}/images/dog.png"
         # self.path = f"{self.pkg_share}/images/NU_Logo.png"
         self.bridge = CvBridge()
-        self.from_file = True
+        self.from_file = False
         
         self.get_logger().info(f"SELF.PS: {self.pkg_share}")
         self.get_logger().info(f"SELF.PATH: {self.path}")
-        
+    
+
+
+    def capture_face(self, cv_image):
+        gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
+        faces = self.face_cascade.detectMultiScale(gray, 1.3, 5)
+
+        for (x, y, w, h) in faces:
+            # Increase the box size upwards, downwards, and slightly to the sides
+            margin_up = 60  
+            margin_down = 40  
+            margin_side = 15  
+
+            # Adjust the coordinates of the bounding box
+            y = max(y - margin_up, 0)  
+            x = max(x - margin_side, 0)  
+            w = w + 2 * margin_side  
+            h = h + margin_up + margin_down  
+
+            # Sharpen the face area
+            face_area = cv_image[y:y+h, x:x+w]
+
+            kernel = np.array([[0, -1, 0],
+                       [-1, 5,-1],
+                       [0, -1, 0]])
+            face_area_sharpened = cv2.filter2D(face_area, -1, kernel)
+
+            return face_area_sharpened
+
+
     def get_image_callback(self, msg):
         self.current_image = msg
+
     
     def capture_image(self, request, response):
         if not self.from_file:
             cv_image = self.bridge.compressed_imgmsg_to_cv2(self.current_image, desired_encoding='passthrough')
-            self.get_logger().info(f"cv image type: {type(cv_image)}")
-            lined_image = doodle_droid.linedraw.linedraw.sketch(cv_image)
-            
-            self.get_logger().info(f"Number of strokes: {len(lined_image)} ")
+
+            face_image = self.capture_face(cv_image)
+            # Step 5: Generate line drawing
+            lined_image = doodle_droid.linedraw.linedraw.sketch(face_image)
+            self.get_logger().info(f"Number of strokes: {len(lined_image)}")
             self.get_logger().info("Finished processing")
             
         else:
