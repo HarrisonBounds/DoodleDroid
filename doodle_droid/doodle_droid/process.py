@@ -27,8 +27,10 @@ class ImageProcessingNode(Node):
         self.pkg_share = get_package_share_directory(self.pkg_name)
         
         # self.path = f"{self.pkg_share}/images/my_smiley.jpeg"
-        # self.path = f"{self.pkg_share}/images/matt.png"
-        self.path = f"{self.pkg_share}/images/NU_Logo.png"
+        self.path = f"{self.pkg_share}/images/matt.png"
+        # self.path = f"{self.pkg_share}/images/apple.png"
+        # self.path = f"{self.pkg_share}/images/dog.png"
+        # self.path = f"{self.pkg_share}/images/NU_Logo.png"
         self.bridge = CvBridge()
         self.from_file = True
         
@@ -56,7 +58,7 @@ class ImageProcessingNode(Node):
             self.get_logger().info(f"Number of strokes: {len(lined_image)} ")
             self.get_logger().info("Finished processing")
             
-        self.get_logger().info(f"lined image: {lined_image}")
+        # self.get_logger().info(f"lined image: {lined_image}")
             
         all_values = [value for sublist in lined_image for tuple_item in sublist for value in tuple_item]
 

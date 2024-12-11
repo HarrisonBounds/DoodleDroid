@@ -74,7 +74,10 @@ class Calibrator(Node):
         self.pose_determined = False
 
         self.tagsize = 0.1016  # using 4 inch apriltags
-        self.pen_offset = 0.138
+        # self.pen_offset = 0.138 # sharpie cal
+        # self.pen_offset = 0.145 # pen cal
+        # self.pen_offset = 0.16 # pen cal pen up
+        self.pen_offset = 0.152 # brush cal
 
 
         # self.static_broadcaster = StaticTransformBroadcaster(self)

@@ -36,6 +36,7 @@ class RoutePlannerNode(Node):
         self._path_visualizer = PathVisualizer(self)
         self._motion_planner = MotionPlanner(self)
 
+        self.paper_size = 0.2
         self.pose_offset = Pose(position=Point(x=0.4, y=0.0, z=0.20))
         self._calibation_pose_sub = self.create_subscription(Pose, "/surface_pose", self._update_offset, 10)
         self._test_server = self.create_service(Empty, "/test_line", self._test_line)
@@ -85,8 +86,16 @@ class RoutePlannerNode(Node):
         self._path_visualizer.set_visualizing_waypoints(waypoints)
         
         start = waypoints.poses[0]
+
+        cached_start_z = start.position.z
+        start.position.z += 0.1
+        await self._motion_planner.plan_c(start, execute=True) # go to above starting waypoint
+        start.position.z = cached_start_z
         await self._motion_planner.plan_c(start, execute=True) # go to starting waypoint
-        await self._motion_planner.execute_waypoints(waypoints) # traverse all waypoints
+        # await self._motion_planner.execute_waypoints(waypoints, velocity=0.005) # traverse all waypoints # with pen
+        await self._motion_planner.execute_waypoints(waypoints, velocity=0.01) # traverse all waypoints 
+        await self._motion_planner.plan_n("ready", execute=True) # go to ready pose
+
 
     async def _plot_callback(self, request, response):
         self.get_logger().info("plotting waypoints")
@@ -155,10 +164,10 @@ class RoutePlannerNode(Node):
         pen_up_dists, robot_xyz_waypoints = tour_to_robot_waypoints(lines,
                                                                     stroke_segments,
                                                                     tour,
-                                                                    paper_width=0.25,
-                                                                    paper_height=0.25,
-                                                                    xoffset=-0.125,
-                                                                    yoffset=-0.125,
+                                                                    paper_width=self.paper_size,
+                                                                    paper_height=self.paper_size,
+                                                                    xoffset=-self.paper_size/2,
+                                                                    yoffset=-self.paper_size/2,
                                                                     paper_height_fn=self.paper_height_model.get_paper_height,
                                                                     pen_clearance=0.01)
         self._draw_waypoints = robot_xyz_waypoints
