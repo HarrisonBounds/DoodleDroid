@@ -25,6 +25,7 @@ from doodle_droid.robot_state import RobotState
 from doodle_droid.motion_planner import MotionPlanner
 from doodle_droid.path_visualizer import PathVisualizer
 
+from scipy.spatial.transform import Rotation as R
 
 class RoutePlannerNode(Node):
     def __init__(self):
@@ -41,10 +42,8 @@ class RoutePlannerNode(Node):
 
         self.pen_clearance = 0.01 # 1 cm
         self.paper_size = Vector3(x=0.2, y=0.2, z=0.0)
-        self.point_offset = Point(x=0.4, y=0.0, z=0.20)
-        self._point_offseet_subscription = self.create_subscription(Point, "/set_offset", self._update_offset, 10)
-        self._paper_size_subscription = self.create_subscription(Vector3, "/paper_size", self._paper_size_callback, 10)
-
+        self.pose_offset = Pose(position=Point(x=0.4, y=0.0, z=0.20))
+        self._calibation_pose_sub = self.create_subscription(Pose, "/surface_pose", self._update_offset, 10)
         self._test_server = self.create_service(Empty, "/test_line", self._test_line)
 
         # self.paper_height_model = PlanePaperHeightModel(0, 0, 1, -0.156) # default to flat paper
@@ -72,8 +71,8 @@ class RoutePlannerNode(Node):
 
 
     def _update_offset(self, msg):
-        self.point_offset = msg
         self._update_joint_traj()
+        self.pose_offset = msg
     
     def _paper_height_callback(self, msg):
         self.get_logger().info(f"Received paper height model: {msg.data}")
@@ -98,12 +97,26 @@ class RoutePlannerNode(Node):
         return waypoints
     
     def _waypoints_to_joint_traj(self, waypoints):
-        dx = self.point_offset.x
-        dy = self.point_offset.y
-        dz = self.point_offset.z
+        dx = self.pose_offset.position.x
+        dy = self.pose_offset.position.y
+        dz = self.pose_offset.position.z
+        
         paper_width = self.paper_size.x
         paper_height = self.paper_size.y
-        offset_waypoints = [(x+(dx*paper_width), y+(dy*paper_height), z+dz) for (x,y,z) in self._draw_waypoints]
+
+        # scale
+        np_waypoints = np.array(self._draw_waypoints) * np.array([paper_width, paper_height, 1])
+
+        # rotate
+        quat = self.pose_offset.orientation
+        quat = (quat.x, quat.y, quat.z, quat.w)
+        rotation = R.from_quat(quat)
+        rotated_points = rotation.apply(np_waypoints)
+
+        # translate
+        translated_waypoints = rotated_points + np.array([dx, dy, 0])
+        offset_waypoints = [(x,y,z+dz) for ((_, _, z), (x, y, _)) in zip(self._draw_waypoints, translated_waypoints)] # don't rotate z
+
         waypoints = self.pose_waypoints_from_xyz(offset_waypoints)
         self._path_visualizer.set_visualizing_waypoints(waypoints)
 
@@ -137,7 +150,18 @@ class RoutePlannerNode(Node):
     async def _plot_callback(self, request, response):
         self.get_logger().info("plotting waypoints")
         if self._draw_waypoints is not None:
-            fig, ax = plot_robot_waypoints(self._draw_waypoints, paper_height_fn=self.paper_height_model.get_paper_height)
+            dx = self.pose_offset.position.x
+            dy = self.pose_offset.position.y
+            dz = self.pose_offset.position.z
+
+            quat = self.pose_offset.orientation
+            quat = (quat.x, quat.y, quat.z, quat.w)
+            rotation = R.from_quat(quat)
+            rotated_points = rotation.apply(np.array(self._draw_waypoints))
+            translated_waypoints = rotated_points + np.array([dx, dy, 0])
+            offset_waypoints = [(x,y,z+dz) for ((_, _, z), (x, y, _)) in zip(self._draw_waypoints, translated_waypoints)] # don't rotate z
+
+            fig, ax = plot_robot_waypoints(offset_waypoints, paper_height_fn=self.paper_height_model.get_paper_height)
             fig.savefig(f"{self.pkg_share}/output.png")
             self.get_logger().info("done plotting waypoints")
         
@@ -149,6 +173,7 @@ class RoutePlannerNode(Node):
             return response
         
         await self._execute_traj()
+        
         return response
     
     def _route_callback(self, request, response):
@@ -167,8 +192,8 @@ class RoutePlannerNode(Node):
                                                                     tour,
                                                                     paper_width=1.0,
                                                                     paper_height=1.0,
-                                                                    xoffset=0.0,
-                                                                    yoffset=0.0,
+                                                                    xoffset=-.50,
+                                                                    yoffset=-.50,
                                                                     paper_height_fn=self.paper_height_model.get_paper_height,
                                                                     pen_clearance=self.pen_clearance,)
         self._draw_waypoints = robot_xyz_waypoints
@@ -200,11 +225,9 @@ class RoutePlannerNode(Node):
         await self._motion_planner.execute_joint_trajectory(joint_traj)
         
     async def _test_line(self, request, response):
+        raise NotImplementedError
         # await self._motion_planner.plan_n('ready', execute=True)
         pose = Pose()
-        pose.position.x = self.point_offset.x
-        pose.position.y = self.point_offset.y
-        pose.position.z = self.point_offset.z
         pose.orientation = Quaternion(x=0.9238792,
                                         y=-0.3826833,
                                         z=0.0003047,

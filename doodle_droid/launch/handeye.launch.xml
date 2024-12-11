@@ -10,10 +10,16 @@
         exec="apriltag_node"
         output="screen"
         name="apriltag_node">
-        <remap from="image_rect" to="/camera/camera/color/image_raw" />
+        <remap from="image_rect" to="/camera/camera/color/image_rect" />
         <remap from="camera_info" to="/camera/camera/color/camera_info" />
         <param from="$(find-pkg-share doodle_droid)/$(var apriltag_params)" />
     </node>
+
+    <include file="$(find-pkg-share image_proc)/launch/image_proc.launch.py">
+        <arg name="namespace" value="/camera/camera/color/"/>
+    </include>   
+
+    <!-- <include file="$(find-pkg-share doodle_droid)/launch/aruco.launch.py"/>    -->
 
     <include file="$(find-pkg-share easy_handeye2)/launch/calibrate.launch.py">
       <arg name="calibration_type" value="eye_in_hand"/>
