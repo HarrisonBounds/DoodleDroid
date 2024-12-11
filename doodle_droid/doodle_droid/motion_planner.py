@@ -515,7 +515,7 @@ class MotionPlanner():
         joint_states = self._robot_state.get_arm_joint_states()
         t = 0.0
         pose_cache = None
-        for waypoint in waypoints.poses:
+        for waypoint in [waypoints.poses[0]] + waypoints.poses:
             # Add current joint states to the trajectory
             traj_point = JointTrajectoryPoint()
             traj_point.positions = joint_states.position
@@ -545,8 +545,8 @@ class MotionPlanner():
                     (waypoint.position.x - pose_cache.position.x) ** 2 +
                     (waypoint.position.y - pose_cache.position.y) ** 2 +
                     (waypoint.position.z - pose_cache.position.z) ** 2)
-                dt = max(distance/velocity, 0.5)
-                # dt = 0.5 # used with success for full image
+                # dt = max(distance/velocity, 5)
+                dt = 5 # used with success for full image
                 t += dt
             sec = int(math.floor(t))
             nanosec = int((t - sec) * 1e9)

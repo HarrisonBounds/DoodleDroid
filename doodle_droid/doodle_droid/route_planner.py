@@ -44,7 +44,7 @@ class RoutePlannerNode(Node):
         self.paper_size = Vector3(x=0.2, y=0.2, z=0.0)
         self.pose_offset = Pose(position=Point(x=0.4, y=0.0, z=0.20))
         self._calibation_pose_sub = self.create_subscription(Pose, "/surface_pose", self._update_offset, 10)
-        self._test_server = self.create_service(Empty, "/test_line", self._test_line)
+        # self._test_server = self.create_service(Empty, "/test_line", self._test_line)
 
         # self.paper_height_model = PlanePaperHeightModel(0, 0, 1, -0.156) # default to flat paper
         self.paper_height_model = PlanePaperHeightModel(0, 0, 1, 0) # default to flat paper
@@ -52,6 +52,7 @@ class RoutePlannerNode(Node):
         self._max_vel = 0.02
         self._draw_waypoints = None
         self._cached_joint_traj = None
+        self._plot_waypoints = None
         self._draw_server = self.create_service(Empty, "/draw", self._draw_callback)
         self._plot_server = self.create_service(Empty, "/plot", self._plot_callback)
         self._outline_paper_server = self.create_service(Empty, "/outline_paper", self._outline_paper)
@@ -65,14 +66,15 @@ class RoutePlannerNode(Node):
         self._paper_height_subscription = self.create_subscription(String, "paper_height", self._paper_height_callback, 10)
 
 
-    def _paper_size_callback(self, msg):
+    async def _paper_size_callback(self, msg):
         self.paper_size = msg
-        self._update_joint_traj()
+        await self._update_joint_traj()
 
 
-    def _update_offset(self, msg):
-        self._update_joint_traj()
+    async def _update_offset(self, msg):
+        self.get_logger().info(f"Received new surface pose: {msg}")
         self.pose_offset = msg
+        await self._update_joint_traj()
     
     def _paper_height_callback(self, msg):
         self.get_logger().info(f"Received paper height model: {msg.data}")
@@ -96,11 +98,11 @@ class RoutePlannerNode(Node):
 
         return waypoints
     
-    def _waypoints_to_joint_traj(self, waypoints):
+    async def _waypoints_to_joint_traj(self, waypoints):
         dx = self.pose_offset.position.x
         dy = self.pose_offset.position.y
-        dz = self.pose_offset.position.z
-        
+        dz = self.pose_offset.position.z  + 0.01 # 1cm above
+         
         paper_width = self.paper_size.x
         paper_height = self.paper_size.y
 
@@ -116,15 +118,18 @@ class RoutePlannerNode(Node):
         # translate
         translated_waypoints = rotated_points + np.array([dx, dy, 0])
         offset_waypoints = [(x,y,z+dz) for ((_, _, z), (x, y, _)) in zip(self._draw_waypoints, translated_waypoints)] # don't rotate z
-
+        self._plot_waypoints = offset_waypoints
+        
         waypoints = self.pose_waypoints_from_xyz(offset_waypoints)
         self._path_visualizer.set_visualizing_waypoints(waypoints)
 
-        return self._motion_planner._construct_joint_trajectory_from_waypoints(waypoints, self._max_vel)
+        return await self._motion_planner._construct_joint_trajectory_from_waypoints(waypoints, self._max_vel)
 
-    def _update_joint_traj(self):
-        self._cached_joint_traj = self._waypoints_to_joint_traj(self._draw_waypoints)
-
+    async def _update_joint_traj(self):
+        if self._draw_waypoints is None:
+            return
+        self._cached_joint_traj =  await self._waypoints_to_joint_traj(self._draw_waypoints)
+        self.get_logger().info(f"")
         final_time = self._cached_joint_traj.points[-1].time_from_start
         self._drawing_time_publisher.publish(final_time)
         self.get_logger().info(f"Drawing will take: {final_time.sec + final_time.nanosec*1e-9:8.4f} seconds")
@@ -134,11 +139,21 @@ class RoutePlannerNode(Node):
         if self._verbosity > 0:
             self.get_logger().info("going to ready pose")
 
-        start_pose = self._cached_joint_traj.positions[0]
-        start_pose = JointState()
-        start_pose.name = self._cached_joint_traj.joint_names
-        start_pose.position = self._cached_joint_traj.positions[0]
-        await self._motion_planner.plan_j(start_pose, execute=True)
+        # start_pose = self._cached_joint_traj.points[0]
+        # start_pose = JointState()
+        # start_pose.name = self._cached_joint_traj.joint_names
+        # start_pose.position = self._cached_joint_traj.points[0].positions
+        # await self._motion_planner.plan_j(start_pose, execute=True)
+        start_point = self._plot_waypoints[0]
+        pose = Pose()
+        pose.position.x = start_point[0]
+        pose.position.y = start_point[1]
+        pose.position.z = start_point[2] 
+        pose.orientation = Quaternion(x=0.9238792,
+                                        y=-0.3826833,
+                                        z=0.0003047,
+                                        w=0.0007357)
+        await self._motion_planner.plan_c(pose, execute=True)
 
         if self._verbosity > 0:
             self.get_logger().info("at start pose. Drawing")
@@ -149,19 +164,8 @@ class RoutePlannerNode(Node):
 
     async def _plot_callback(self, request, response):
         self.get_logger().info("plotting waypoints")
-        if self._draw_waypoints is not None:
-            dx = self.pose_offset.position.x
-            dy = self.pose_offset.position.y
-            dz = self.pose_offset.position.z
-
-            quat = self.pose_offset.orientation
-            quat = (quat.x, quat.y, quat.z, quat.w)
-            rotation = R.from_quat(quat)
-            rotated_points = rotation.apply(np.array(self._draw_waypoints))
-            translated_waypoints = rotated_points + np.array([dx, dy, 0])
-            offset_waypoints = [(x,y,z+dz) for ((_, _, z), (x, y, _)) in zip(self._draw_waypoints, translated_waypoints)] # don't rotate z
-
-            fig, ax = plot_robot_waypoints(offset_waypoints, paper_height_fn=self.paper_height_model.get_paper_height)
+        if self._plot_waypoints is not None:
+            fig, ax = plot_robot_waypoints(self._plot_waypoints, paper_height_fn=self.paper_height_model.get_paper_height)
             fig.savefig(f"{self.pkg_share}/output.png")
             self.get_logger().info("done plotting waypoints")
         
@@ -176,7 +180,7 @@ class RoutePlannerNode(Node):
         
         return response
     
-    def _route_callback(self, request, response):
+    async def _route_callback(self, request, response):
         lines = json.loads(request.data)
         lines = [[(1-x,y) for (x,y) in line] for line in lines]
         pen_down_dists = [stroke_dist(np.array(line)) for line in lines]
@@ -197,7 +201,7 @@ class RoutePlannerNode(Node):
                                                                     paper_height_fn=self.paper_height_model.get_paper_height,
                                                                     pen_clearance=self.pen_clearance,)
         self._draw_waypoints = robot_xyz_waypoints
-        self._update_joint_traj()
+        await self._update_joint_traj()
 
         if self._verbosity > 0:
             pen_up_dist = sum(pen_up_dists)
@@ -210,16 +214,16 @@ class RoutePlannerNode(Node):
         return response
     
     async def _outline_paper(self, request, response):
-        joint_traj = self._waypoints_to_joint_traj([(0,0,self.pen_clearance),
+        joint_traj = await self._waypoints_to_joint_traj([(0,0,self.pen_clearance),
                                                     (0,1,self.pen_clearance),
                                                     (1,1,self.pen_clearance),
                                                     (1,0,self.pen_clearance),
                                                     (0,0,self.pen_clearance)])
         
-        start_pose = self._cached_joint_traj.positions[0]
+        start_pose = self._cached_joint_traj.points[0]
         start_pose = JointState()
         start_pose.name = self._cached_joint_traj.joint_names
-        start_pose.position = self._cached_joint_traj.positions[0]
+        start_pose.position = self._cached_joint_traj.points[0]
         await self._motion_planner.plan_j(start_pose, execute=True)
 
         await self._motion_planner.execute_joint_trajectory(joint_traj)
