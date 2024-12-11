@@ -11,9 +11,16 @@ Hardware Engineer: Yanni
 
 # Quickstart
 ## Install
-- sudo apt install ros-jazzy-usb-cam
+Follow NU-MSR github to install realsense
+https://nu-msr.github.io/hackathon/computer_setup.html#org20c2832
+
+```
+sudo apt install ros-jazzy-usb-cam
+sudo apt install ros-jazzy-apriltag-ros
+sudo apt install ros-jazzy-image-pipeline
+```
+
 - [**ELEPHANT FILL ME IN**]
--  
 ## Build
 - colcon build
 - source install/setup.bash
