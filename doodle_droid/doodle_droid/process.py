@@ -26,9 +26,9 @@ class ImageProcessingNode(Node):
         self.pkg_share = get_package_share_directory(self.pkg_name)
         
         # self.path = f"{self.pkg_share}/images/my_smiley.jpeg"
-        self.path = f"{self.pkg_share}/images/matt.png"
+        self.path = f"{self.pkg_share}/images/luffy.jpg"
         self.bridge = CvBridge()
-        self.from_file = False
+        self.from_file = True
         
         self.get_logger().info(f"SELF.PS: {self.pkg_share}")
         self.get_logger().info(f"SELF.PATH: {self.path}")
