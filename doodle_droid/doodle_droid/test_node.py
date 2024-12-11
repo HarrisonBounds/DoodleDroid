@@ -74,9 +74,12 @@ class TestNode(Node):
         #     # the times are two far apart to extrapolate
         #     self.get_logger().info(f'Extrapolation exception: {e}')
         # pass
-        z = 0.18
+
+
+        #### PEN OFFSET SEEMS OT BE 0.147, (FOR BRUSH PEN IN BLACK SPRINGLESS HOLDER)
+        z = 0.152+ 0.0226
         start1 = Pose()
-        start1.position = Point(x=0.4649310292817388, y=-0.18247145573639523, z=z)
+        start1.position = Point(x=0.3, y=-0.1, z=z)
         start1.orientation = Quaternion(x=0.9238792,
                                         y=-0.3826833,
                                         z=0.0003047,

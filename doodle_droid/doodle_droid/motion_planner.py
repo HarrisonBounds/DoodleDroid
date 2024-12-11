@@ -109,9 +109,9 @@ class MotionPlanner():
         self._hand_group_name = 'hand'
         self._hand_joint_names = ['fer_finger_joint1', 'fer_finger_joint2']
 
-        self._joint_tolerance = 0.0005
-        self._position_tolerance = 0.01
-        self._orientation_tolerance = 0.01
+        self._joint_tolerance = 0.00005 #0.0005 before
+        self._position_tolerance = 0.001 #0.01 before
+        self._orientation_tolerance = 0.001 #0.01 before
         self._base_frame = 'base'
         self._ee_frame = 'fer_link8'
 
@@ -539,7 +539,7 @@ class MotionPlanner():
                     (waypoint.position.x - pose_cache.position.x) ** 2 +
                     (waypoint.position.y - pose_cache.position.y) ** 2 +
                     (waypoint.position.z - pose_cache.position.z) ** 2)
-                dt = 0.5 # max(distance/velocity, 0.01)
+                dt = 5.0 # max(distance/velocity, 0.01)
                 t += dt
             sec = int(math.floor(t))
             nanosec = int((t - sec) * 1e9)

@@ -58,7 +58,7 @@ class Calibrator(Node):
         self.surface_publisher = self.create_publisher(Marker, 'surface_marker', 10)
         self.drawing_dims_publisher = self.create_publisher(Vector3, "drawing_dims", 10)
         self.surface_pose_publisher = self.create_publisher(Pose, "surface_pose", 10)
-        self.cam_sub = self.create_subscription(Image, 'image_rect', self.get_image_callback, 10)
+        self.cam_sub = self.create_subscription(Image, '/camera/camera/color/image_rect', self.get_image_callback, 10)
 
         self.broadcaster = TransformBroadcaster(self)
         self.buffer = Buffer()
@@ -74,6 +74,7 @@ class Calibrator(Node):
         self.pose_determined = False
 
         self.tagsize = 0.1016  # using 4 inch apriltags
+        self.pen_offset = 0.138
 
 
         # self.static_broadcaster = StaticTransformBroadcaster(self)
@@ -82,8 +83,8 @@ class Calibrator(Node):
         # base_aruco_tf.header.frame_id = 'base'
         # base_aruco_tf.child_frame_id = 'tag'
         # base_aruco_tf.transform.translation.x = 0.5 # change to match camera mounting
-        # base_aruco_tf.transform.translation.y = -0.0193
-        # base_aruco_tf.transform.translation.z = 0.0025
+        # base_aruco_tf.transform.translation.y = 0.0
+        # base_aruco_tf.transform.translation.z = 0.02
 
         # self.static_broadcaster.sendTransform(base_aruco_tf)
 
@@ -104,25 +105,23 @@ class Calibrator(Node):
 
         # self.static_broadcaster.sendTransform(world_camera_tf)
 
-        ###### FROM FIRST CALIBRATION
+        ##### FROM THIRD CALIBRATION (PLEASE WORK)
         self.static_broadcaster = StaticTransformBroadcaster(self)
         world_camera_tf = TransformStamped()
         world_camera_tf.header.stamp = self.get_clock().now().to_msg()
         world_camera_tf.header.frame_id = 'fer_hand'
         world_camera_tf.child_frame_id = 'camera_link'
-        world_camera_tf.transform.translation.x = 0.05567652250199682
-        world_camera_tf.transform.translation.y = 0.017477448428348884
-        world_camera_tf.transform.translation.z = 0.03728619733238588
+        world_camera_tf.transform.translation.x = 0.04077700478326539
+        world_camera_tf.transform.translation.y = 0.01631535438771024
+        world_camera_tf.transform.translation.z = 0.015104079163571737 + 0.0135
 
 
-        world_camera_tf.transform.rotation.x = -0.005235918751358316
-        world_camera_tf.transform.rotation.y = -0.7169794461515647
-        world_camera_tf.transform.rotation.z = -0.01297818109286954
-        world_camera_tf.transform.rotation.w = 0.6969538189625948
+        world_camera_tf.transform.rotation.x = -0.007100127498884945
+        world_camera_tf.transform.rotation.y = -0.711166685920879
+        world_camera_tf.transform.rotation.z = -0.005910717653049716
+        world_camera_tf.transform.rotation.w = 0.7029627276340044
 
         self.static_broadcaster.sendTransform(world_camera_tf)
-
-
 
         ########## OBTAINED FROM HAND EYE CALIBRATION
         # self.static_broadcaster = StaticTransformBroadcaster(self)
@@ -131,18 +130,18 @@ class Calibrator(Node):
         # ee_camcal.header.frame_id = 'fer_hand'
         # # ee_camcal.child_frame_id = 'camera_color_optical_frame'
         # ee_camcal.child_frame_id = 'calibrated'
-        # ee_camcal.transform.translation.x =  0.055954 # change to match camera mounting
-        # ee_camcal.transform.translation.y = 0.032108
-        # ee_camcal.transform.translation.z = 0.037019
+        # ee_camcal.transform.translation.x =  0.040942 # change to match camera mounting
+        # ee_camcal.transform.translation.y = 0.030943
+        # ee_camcal.transform.translation.z = 0.014650
 
-        # ee_camcal.transform.rotation.x = 0.008965 # change to match camera mounting
-        # ee_camcal.transform.rotation.y = -0.007981
-        # ee_camcal.transform.rotation.z = -0.713568
-        # ee_camcal.transform.rotation.w = 0.700483
+        # ee_camcal.transform.rotation.x = -0.001400 # change to match camera mounting
+        # ee_camcal.transform.rotation.y = -0.006516
+        # ee_camcal.transform.rotation.z = -0.711002
+        # ee_camcal.transform.rotation.w = 0.703158
 
         # self.static_broadcaster.sendTransform(ee_camcal)
 
-        ## FOR DETERMINING CAMERA_LINK TF
+        # ## FOR DETERMINING CAMERA_LINK TF
         # self.static_broadcaster = StaticTransformBroadcaster(self)
         # cal_link = TransformStamped()
         # cal_link.header.stamp = self.get_clock().now().to_msg()
@@ -186,7 +185,7 @@ class Calibrator(Node):
                 # cv_image = self.bridge.compressed_imgmsg_to_cv2(self.current_image, desired_encoding='passthrough')
                 # gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
                 try:
-                    base_tag_tf = self.buffer.lookup_transform('base', 'tag', rclpy.time.Time())
+                    base_tag_tf = self.buffer.lookup_transform('base', 'tag0', rclpy.time.Time())
                     pose = Pose()
                     pose.position.x = base_tag_tf.transform.translation.x
                     pose.position.y = base_tag_tf.transform.translation.y
@@ -196,9 +195,38 @@ class Calibrator(Node):
                     self.positions.append(np.array([pose.position.x, pose.position.y, pose.position.z]))
                     self.orientations.append(np.array([pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w]))
 
-                    self.surface_pose_publisher.publish(pose)
+                    base_tag_tf = self.buffer.lookup_transform('base', 'tag1', rclpy.time.Time())
+                    pose.position.x = base_tag_tf.transform.translation.x
+                    pose.position.y = base_tag_tf.transform.translation.y
+                    pose.position.z = base_tag_tf.transform.translation.z
+                    pose.orientation = base_tag_tf.transform.rotation
 
-                    if len(self.positions) == 30:
+                    self.positions.append(np.array([pose.position.x, pose.position.y, pose.position.z]))
+                    self.orientations.append(np.array([pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w]))
+
+
+                    base_tag_tf = self.buffer.lookup_transform('base', 'tag2', rclpy.time.Time())
+                    pose.position.x = base_tag_tf.transform.translation.x
+                    pose.position.y = base_tag_tf.transform.translation.y
+                    pose.position.z = base_tag_tf.transform.translation.z
+                    pose.orientation = base_tag_tf.transform.rotation
+
+                    self.positions.append(np.array([pose.position.x, pose.position.y, pose.position.z]))
+                    self.orientations.append(np.array([pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w]))
+
+
+                    base_tag_tf = self.buffer.lookup_transform('base', 'tag3', rclpy.time.Time())
+                    pose.position.x = base_tag_tf.transform.translation.x
+                    pose.position.y = base_tag_tf.transform.translation.y
+                    pose.position.z = base_tag_tf.transform.translation.z
+                    pose.orientation = base_tag_tf.transform.rotation
+
+                    self.positions.append(np.array([pose.position.x, pose.position.y, pose.position.z]))
+                    self.orientations.append(np.array([pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w]))
+
+                    # self.surface_pose_publisher.publish(pose)
+
+                    if len(self.positions) > 119:
 
                         pose = Pose()
 
@@ -221,7 +249,9 @@ class Calibrator(Node):
                         self.get_logger().info("z " + str(self.pose.position.z) )
                         self.get_logger().info("\n")
 
-                        self.surface_pose_publisher.publish(self.pose)
+                        publish_pose = self.pose
+                        publish_pose.position.z += self.pen_offset
+                        self.surface_pose_publisher.publish(publish_pose)
                         self.surface_published = True
 
                 except tf2_ros.LookupException as e:
@@ -278,16 +308,16 @@ class Calibrator(Node):
         # pass
 
 
-        # start1 = Pose()
-        # start1.position = Point(x=0.45, y=0.05, z=0.75)
+        start1 = Pose()
+        start1.position = Point(x=0.45, y=0.05, z=0.75)
   
-        # start1.orientation = Quaternion(x=0.9238792,
-        #                                 y=-0.3826833,
-        #                                 z=0.0003047,
-        #                                 w=0.0007357)
-        # result, status = await self.motion_planner.plan_p(start1.position,start1.orientation,execute=True)
+        start1.orientation = Quaternion(x=0.9238792,
+                                        y=-0.3826833,
+                                        z=0.0003047,
+                                        w=0.0007357)
+        result, status = await self.motion_planner.plan_p(start1.position,start1.orientation,execute=True)
 
-        # self.motion_planner.print_status(status)
+        self.motion_planner.print_status(status)
 
         self.in_position = True
         self.surface_published = False
@@ -300,15 +330,16 @@ class Calibrator(Node):
     async def test_calibrate_callback(self,request, response):
         # if self.pose_determined:
     
-        move_position = self.pose.position
+        move_pose = self.pose
         # move_position.z += 0.185
-        move_position.z += 0.4
+        # move_pose.position.z += 0.138
+        move_pose.position.z += 0.1405
 
-        move_orientation = Quaternion(x=0.9238792,
+        move_pose.orientation = Quaternion(x=0.9238792,
                                 y=-0.3826833,
                                 z=0.0003047,
                                 w=0.0007357)
-        result, status = await self.motion_planner.plan_p(move_position,move_orientation,execute=True)
+        result, status = await self.motion_planner.plan_c(move_pose,execute=True)
 
   
         return response
@@ -319,6 +350,15 @@ class Calibrator(Node):
     
         self.pose = await self.robot_state.get_ee_pose()
 
+        move_pose = self.pose
+        # move_position.z += 0.185
+        move_pose.position.z -=0.001
+
+        move_pose.orientation = Quaternion(x=0.9238792,
+                                y=-0.3826833,
+                                z=0.0003047,
+                                w=0.0007357)
+        result, status = await self.motion_planner.plan_c(move_pose,execute=True)
 
         self.get_logger().info("x " + str(self.pose.position.x) )
         self.get_logger().info("y " + str(self.pose.position.y) )
