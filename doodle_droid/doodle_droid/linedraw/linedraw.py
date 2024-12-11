@@ -14,12 +14,13 @@ from ament_index_python.packages import get_package_share_directory
 pkg_name = "doodle_droid"
 pkg_share = get_package_share_directory(pkg_name)
 export_path = f"{pkg_share}/images/output.svg"
+export_path2 = f"{pkg_share}/images/linesthickness.svg"
 no_cv = False
 draw_contours = True
-draw_hatch = True
-show_bitmap = False
+draw_hatch = False
+show_bitmap = True
 resolution = 1024
-hatch_size = 24
+hatch_size = 30
 contour_simplify = 1
 
 try:
@@ -200,12 +201,18 @@ def sketch(path):
         disp = Image.new("RGB",(resolution,resolution*h//w),(255,255,255))
         draw = ImageDraw.Draw(disp)
         for l in lines:
-            draw.line(l,(0,0,0),5)
+            draw.line(l,(0,0,0),10)
         disp.show()
 
     f = open(export_path,'w')
     f.write(makesvg(lines))
     f.close()
+
+
+    # f = open(export_path2,'w')
+    # f.write(disp)
+    # f.close()
+
     print(len(lines),"strokes.")
     print("done.")
     return lines

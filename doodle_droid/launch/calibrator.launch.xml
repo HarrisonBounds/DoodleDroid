@@ -6,6 +6,8 @@
 
     <include file="$(find-pkg-share realsense2_camera)/launch/rs_launch.py">
         <arg name="pointcloud.enable" value="false"/>
+        <arg name="camera_name" value="realsense"/>
+        <arg name="camera_namespace" value="realsense"/>
     </include>   
 
     <node
@@ -13,15 +15,15 @@
         exec="apriltag_node"
         output="screen"
         name="apriltag_node">
-        <remap from="image_rect" to="/camera/camera/color/image_rect" />
-        <remap from="camera_info" to="/camera/camera/color/camera_info" />
+        <remap from="image_rect" to="/realsense/realsense/color/image_rect" />
+        <remap from="camera_info" to="/realsense/realsense/color/camera_info" />
         <param from="$(find-pkg-share doodle_droid)/$(var apriltag_params)" />
     </node>
 
     <!-- <include file="$(find-pkg-share doodle_droid)/launch/aruco.launch.py"/>    -->
 
     <include file="$(find-pkg-share image_proc)/launch/image_proc.launch.py">
-        <arg name="namespace" value="/camera/camera/color/"/>
+        <arg name="namespace" value="/realsense/realsense/color/"/>
     </include>   
 
     <node pkg='doodle_droid' exec='calibrator'/>

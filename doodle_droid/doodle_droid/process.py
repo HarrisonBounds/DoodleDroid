@@ -61,14 +61,24 @@ class ImageProcessingNode(Node):
             h = h + margin_up + margin_down  
 
             # Sharpen the face area
-            face_area = cv_image[y:y+h, x:x+w]
+            face_area = gray[y:y+h, x:x+w]
 
             kernel = np.array([[0, -1, 0],
                        [-1, 5,-1],
                        [0, -1, 0]])
             face_area_sharpened = cv2.filter2D(face_area, -1, kernel)
+            # face_area_blurred = cv2.GaussianBlur(face_area_sharpened,(3,3),3)
 
-            return face_area_sharpened
+            edges = cv2.Canny(face_area, 100, 200)
+            face_area_thickened = cv2.addWeighted(face_area_sharpened, 0.5, edges, 0.5, 0)
+
+            laplacian = cv2.Laplacian(face_area, cv2.CV_64F)
+            laplacian_abs = cv2.convertScaleAbs(laplacian)
+            face_area_thickened = cv2.addWeighted(face_area, 1.0, laplacian_abs, 0.5, 0)
+
+
+
+            return face_area_thickened
 
 
     def get_image_callback(self, msg):
