@@ -109,9 +109,9 @@ class MotionPlanner():
         self._hand_group_name = 'hand'
         self._hand_joint_names = ['fer_finger_joint1', 'fer_finger_joint2']
 
-        self._joint_tolerance = 0.0005
-        self._position_tolerance = 0.01
-        self._orientation_tolerance = 0.01
+        self._joint_tolerance = 0.00005 #0.0005 before
+        self._position_tolerance = 0.001 #0.01 before
+        self._orientation_tolerance = 0.001 #0.01 before
         self._base_frame = 'base'
         self._ee_frame = 'fer_link8'
 
@@ -509,7 +509,7 @@ class MotionPlanner():
         joint_states = self._robot_state.get_arm_joint_states()
         t = 0.0
         pose_cache = None
-        for waypoint in waypoints.poses:
+        for waypoint_idx, waypoint in enumerate(waypoints.poses):
             # Add current joint states to the trajectory
             traj_point = JointTrajectoryPoint()
             traj_point.positions = joint_states.position
@@ -533,14 +533,22 @@ class MotionPlanner():
             joint_states = ik_res.solution.joint_state
             joint_states = self._filter_out_arm_joint_states(joint_states)
             if pose_cache is None:
-                t = 0.0
+                t = 1.0
             else:
                 distance = math.sqrt(
                     (waypoint.position.x - pose_cache.position.x) ** 2 +
                     (waypoint.position.y - pose_cache.position.y) ** 2 +
                     (waypoint.position.z - pose_cache.position.z) ** 2)
-                dt = 0.5 # max(distance/velocity, 0.01)
+                if distance/velocity < 0.02:
+                    self._node.get_logger().info(f"distance: {distance}, velocity: {velocity}, nominal dt: {distance/velocity}")
+                dt = max(distance/velocity, 0.02)
+                if waypoint_idx < 5:
+                    dt = max(dt, 1.0)
+                if waypoint_idx < 3:
+                    dt = max(dt, 3.0)
                 t += dt
+
+                
             sec = int(math.floor(t))
             nanosec = int((t - sec) * 1e9)
             traj_point.time_from_start = Duration(sec=sec, nanosec=nanosec)
