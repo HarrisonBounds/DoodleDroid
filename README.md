@@ -1,33 +1,6 @@
 # DoodleDroid
 
 https://docs.google.com/document/d/1tCsjUFVBGqud-HylWmlEa1OkyHOy-n-hFuSvpV8IUJU/edit?usp=sharing
-## Tasks: Bold name is main contributor
-### Image processor: Harrison and Yanni
-  - [x] Takes in an image, and converts it to a line half-tone image
-  - We may use this github repo:  https://github.com/GravO8/halftone-lines
-  - Outputs the lines the robot should draw (along with their thicknesses)
-### Calibrator: Yanni, Christian
-  -  Determines the drawing surface plane by probing some points on the surface, similar to a 3D printer
-### route Planner: David, Han, Harrison
-  - Preliminary:
-    - [x] use MoveIt to generate test drawing sequences (Han: Due Nov 25th; done nov 25th)
-    - [x] Lines -> line route (David: Due Nov 25; Done Nov 22)
-    - [x] Calibration -> querable height map (David: Done Dec 1).
-    - [x] Line route + height map -> xyz path (David: Done Dec 1)
-  - [ ] integrate height calibration node into route planner
-    - [ ] calibration node -> route planner service or topic schema
-  - [ ] integrate image pipeline into route planner.
-    - [x] image -> route planner hand-tested; (David, Harrison; Done Dec 1)
-    - [ ] image node -> route planner Service schema
-  - [ ] (stretch-contigent) line thicknesses.
-  - [ ] (stretch-contigent) thickness sequence -> target forces.
-### Path Executor: Han, Christian, David
-  - [x] XYZ+  route -> joint sequence (Han: Done late Nov)
-  -  Executes the robot joint trajectories
-### Stretch
-#### Force Control (stretch): David
-  - [ ] Pending evaluation of if single-width lines are sufficient.
-#### Image input (stretch): Harrison and Yanni
 
 ## Secondary roles:
 Dev-ops:  David
@@ -36,18 +9,22 @@ Code hygienist: Christian
 Integration: Han
 Hardware Engineer: Yanni
 
-### Extra Notes 
+# Quickstart
+## Install
+- sudo apt install ros-jazzy-usb-cam
+- [**ELEPHANT FILL ME IN**]
+-  
+## Build
+- colcon build
+- source install/setup.bash
+## Run
+- Follow instructions on https://nu-msr.github.io/ros_notes/ros2/franka.html to connect to the Franka arm and start the controllers and moveit.
+- On your machine, run `ros2 launch doodle_droid all.launch.xml` to launch the system.
+- Start by calibrating the system run `ros2 service call /calibrate  [**ELEPHANT FILL ME IN**]`. Once calibration is complete, you can:
+- Take a photo: run `ros2 service call /take_photo [**ELEPHANT FILL ME IN**]`. Retake your photo if desired, or if the output looks good,
+- Draw the photo: run `ros2 service call /draw [**ELEPHANT FILL ME IN**]`
 
-```
-sudo apt install ros-jazzy-usb-cam
-```
-## meeting notes
-### 2024 11 25
-- All 5 members in attendance
-- Harrision:
-  - [ ] will simplify number of lines in the line drawing.
-  - [ ] will integrate into ros & debug imports
-  - [ ] will share poly line outputs of the processed image
-- Yanni:
-  - has an april tag to ros reader with plane visualizer
-  - [ ] will add multiple april tags and average readings
+# Demos:
+- Photos [**ELEPHANT FILL ME IN**]
+- Videos [**ELEPHANT FILL ME IN**]
+
