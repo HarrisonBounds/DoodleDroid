@@ -77,7 +77,7 @@ class Calibrator(Node):
         # self.pen_offset = 0.138 # sharpie cal
         # self.pen_offset = 0.145 # pen cal
         # self.pen_offset = 0.16 # pen cal pen up
-        self.pen_offset = 0.152 # brush cal
+        self.pen_offset = 0.15 # brush cal
 
 
         # self.static_broadcaster = StaticTransformBroadcaster(self)
@@ -113,10 +113,10 @@ class Calibrator(Node):
         world_camera_tf = TransformStamped()
         world_camera_tf.header.stamp = self.get_clock().now().to_msg()
         world_camera_tf.header.frame_id = 'fer_hand'
-        world_camera_tf.child_frame_id = 'camera_link'
+        world_camera_tf.child_frame_id = 'realsense_link'
         world_camera_tf.transform.translation.x = 0.04077700478326539
         world_camera_tf.transform.translation.y = 0.01631535438771024
-        world_camera_tf.transform.translation.z = 0.015104079163571737 + 0.0135
+        world_camera_tf.transform.translation.z = 0.015104079163571737 + 0.019
 
 
         world_camera_tf.transform.rotation.x = -0.007100127498884945
@@ -312,7 +312,7 @@ class Calibrator(Node):
 
 
         start1 = Pose()
-        start1.position = Point(x=0.45, y=0.05, z=0.75)
+        start1.position = Point(x=0.55, y=0.0, z=0.75)
   
         start1.orientation = Quaternion(x=0.9238792,
                                         y=-0.3826833,
@@ -336,7 +336,7 @@ class Calibrator(Node):
         move_pose = self.pose
         # move_position.z += 0.185
         # move_pose.position.z += 0.138
-        move_pose.position.z += 0.1405
+        move_pose.position.z += self.pen_offset
 
         move_pose.orientation = Quaternion(x=0.9238792,
                                 y=-0.3826833,

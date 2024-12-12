@@ -77,9 +77,9 @@ class TestNode(Node):
 
 
         #### PEN OFFSET SEEMS OT BE 0.147, (FOR BRUSH PEN IN BLACK SPRINGLESS HOLDER)
-        z = 0.152+ 0.0226
+        z = 0.15 + 0.0226
         start1 = Pose()
-        start1.position = Point(x=0.3, y=-0.1, z=z)
+        start1.position = Point(x=0.4, y=-0.0, z=z)
         start1.orientation = Quaternion(x=0.9238792,
                                         y=-0.3826833,
                                         z=0.0003047,
