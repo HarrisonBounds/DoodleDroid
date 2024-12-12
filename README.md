@@ -40,3 +40,12 @@ sudo apt install ros-jazzy-image-pipeline
 - Draw the photo: run `ros2 service call /draw  std_srvs/srv/Empty`. Wait patiently for your commissioned piece.
 - Once the robot returns to the `ready' pose. Disable with the enabling device and collect the masterpiece. Prep new image.
 
+
+# Nodes, Launchfiles, and System Architecture
+## Nodes
+- calibrator: places robot in calibration pose and looks for april tags on the paper worspace. Publishes Pose of paper origin (xyz & quaternion) on the `surface_pose` topic.
+- image processor: when `/take_picture` service is called, captures image from USB camera or file (depending on configuration) and processes it into line art. publishes lines over `/new_image` topic which the route planner listens to.
+- route planner: listens on the `/new_image` topic. when sets of polylines are received, the route planner node uses an approximation of the [Travelling Salseman Problem](https://en.wikipedia.org/wiki/Travelling_salesman_problem) to order the polylines in preparation for efficient drawing. These line segments are chained together with pen-up and pen-down motions to ensure no lines are drawn to connect sequential drawn lines. The route planner applies the calibration received from the calibration node to transform the drawing route into the paper frame for robot execution. When the `/draw` service is called, this node uses moveit to draw the image. 
+## Launchfiles:
+- all.launch.xml
+    -  starts all nodes described above, as well as 3rd party nodes (e.g. intel realsense node,  and usb cam node) for the entire system to function as described above.
