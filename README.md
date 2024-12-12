@@ -14,6 +14,9 @@ Hardware Engineer: Yanni
 Follow NU-MSR github to install realsense
 https://nu-msr.github.io/hackathon/computer_setup.html#org20c2832
 
+Follow instructions on https://nu-msr.github.io/ros_notes/ros2/franka.html to setup Franka environment
+
+Also install:
 ```
 sudo apt install ros-jazzy-usb-cam
 sudo apt install ros-jazzy-apriltag-ros
