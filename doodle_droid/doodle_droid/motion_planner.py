@@ -112,6 +112,7 @@ class MotionPlanner():
         self._joint_tolerance = 0.00005 #0.0005 before
         self._position_tolerance = 0.001 #0.01 before
         self._orientation_tolerance = 0.001 #0.01 before
+        self._min_dt = 0.5
         self._base_frame = 'base'
         self._ee_frame = 'fer_link8'
 
@@ -488,6 +489,31 @@ class MotionPlanner():
             tolerance_list.append(tolerance)
         return tolerance_list
 
+    def _dt_scaling_function(self,
+                             dt: float,
+                             index: int,
+                             b: float = 5,
+                             k: float = -1.0):
+        """
+        Decreasing function for dt.
+
+        :param dt: The current dt
+        :type dt: float
+        :param index: The index
+        :type index: int
+        :param b: The bias
+        :type b: float
+        :param k: The rate
+        :type k: float
+        """
+        index_stop = (self._min_dt - b) / k
+        if index < index_stop:
+            return max(k*index + b, self._min_dt)
+        else:
+            if dt < self._min_dt:
+                self._node.get_logger().info('nominal dt: ' + str(dt))
+            return max(dt, self._min_dt)
+
     async def _construct_joint_trajectory_from_waypoints(
             self,
             waypoints: PoseArray,
@@ -539,16 +565,9 @@ class MotionPlanner():
                     (waypoint.position.x - pose_cache.position.x) ** 2 +
                     (waypoint.position.y - pose_cache.position.y) ** 2 +
                     (waypoint.position.z - pose_cache.position.z) ** 2)
-                if distance/velocity < 0.02:
-                    self._node.get_logger().info(f"distance: {distance}, velocity: {velocity}, nominal dt: {distance/velocity}")
-                dt = max(distance/velocity, 0.02)
-                if waypoint_idx < 5:
-                    dt = max(dt, 1.0)
-                if waypoint_idx < 3:
-                    dt = max(dt, 3.0)
+                dt = distance/velocity
+                dt = self._dt_scaling_function(dt, waypoint_idx)
                 t += dt
-
-                
             sec = int(math.floor(t))
             nanosec = int((t - sec) * 1e9)
             traj_point.time_from_start = Duration(sec=sec, nanosec=nanosec)
