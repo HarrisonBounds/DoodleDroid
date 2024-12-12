@@ -19,8 +19,8 @@ no_cv = False
 draw_contours = True
 draw_hatch = False
 show_bitmap = True
-resolution = 1024
-hatch_size = 30
+resolution = 320
+hatch_size = 10
 contour_simplify = 1
 
 try:
@@ -126,7 +126,7 @@ def getcontours(IM,sc=2):
 
     for i in range(0,len(contours)):
         contours[i] = [(v[0]*sc,v[1]*sc) for v in contours[i]]
-    # contours = [l for l in contours if min(w,h)*sc * 0.05 < np.linalg.norm(np.array(l[0]) - np.array(l[-1])) ]#< min(w,h) *sc *0.95]
+    # contours = [l for l in contours if min(w,h)*sc * 0.02 < np.linalg.norm(np.array(l[0]) - np.array(l[-1])) ]#< min(w,h) *sc *0.95]
 
     for i in range(0,len(contours)):
         for j in range(0,len(contours[i])):
@@ -171,7 +171,7 @@ def hatch(IM,sc=16):
         lines[k] = [l for l in lines[k] if len(l) > 0]
     lines = lines[0]+lines[1]
 
-    # lines = [l for l in lines if min(w,h)*sc * 0.05 < np.linalg.norm(np.array(l[0]) - np.array(l[-1])) < min(w,h) *sc *0.35]
+    lines = [l for l in lines if min(w,h)*sc * 0.05 < np.linalg.norm(np.array(l[0]) - np.array(l[-1])) < min(w,h) *sc *0.25]
 
     for i in range(0,len(lines)):
         for j in range(0,len(lines[i])):
@@ -207,7 +207,7 @@ def sketch(path):
         disp = Image.new("RGB",(resolution,resolution*h//w),(255,255,255))
         draw = ImageDraw.Draw(disp)
         for l in lines:
-            draw.line(l,(0,0,0),10)
+            draw.line(l,(0,0,0),5)
         disp.show()
 
     f = open(export_path,'w')

@@ -36,7 +36,7 @@ class RoutePlannerNode(Node):
         self._path_visualizer = PathVisualizer(self)
         self._motion_planner = MotionPlanner(self)
 
-        self.paper_size = 0.25
+        self.paper_size = 0.125
         self.pose_offset = Pose(position=Point(x=0.4, y=0.0, z=0.20))
         self._calibation_pose_sub = self.create_subscription(Pose, "/surface_pose", self._update_offset, 10)
         self._test_server = self.create_service(Empty, "/test_line", self._test_line)
@@ -102,7 +102,7 @@ class RoutePlannerNode(Node):
     async def _plot_callback(self, request, response):
         self.get_logger().info("plotting waypoints")
         if self._draw_waypoints is not None:
-            dx = self.pose_offset.position.x
+            dx = self.pose_offset.position.x-0.1
             dy = self.pose_offset.position.y
             dz = self.pose_offset.position.z
 
@@ -181,7 +181,7 @@ class RoutePlannerNode(Node):
         self.get_logger().info(f"Total distance: {total_distance}")
         self.get_logger().info(f"Pen down distance: {pen_down_dist} ({100 * pen_down_dist/total_distance:.2f}% of total)")
         self.get_logger().info(f"Pen up distance: {pen_up_dist} ({100 * pen_up_dist/total_distance:.2f}% of total)")
-        self.get_logger().info(f"draw waypoints: { self._draw_waypoints}") 
+        # self.get_logger().info(f"draw waypoints: { self._draw_waypoints}") 
         return response
     
     async def _test_line(self, request, response):

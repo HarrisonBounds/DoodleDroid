@@ -6,7 +6,7 @@ import rclpy.time
 
 from sensor_msgs.msg import CompressedImage
 from std_srvs.srv import Empty
-from cv_bridge import CvBridge
+from cv_bridge import CvBridge 
 import cv2 as cv
 from doodle_droid.linedraw.linedraw import *
 from std_msgs.msg import String
@@ -36,10 +36,11 @@ class ImageProcessingNode(Node):
         # self.path = f"{self.pkg_share}/images/apple.png"
         # self.path = f"{self.pkg_share}/images/dog.png"
         # self.path = f"{self.pkg_share}/images/NU_Logo.png"
-        self.path = f"{self.pkg_share}/images/luffy_face.png"
+        # self.path = f"{self.pkg_share}/images/luffy_face.png"
         # self.path = f"{self.pkg_share}/images/luffy.jpg"
+        self.path = f"{self.pkg_share}/images/totoro_2.jpg"
         self.bridge = CvBridge()
-        self.from_file = True
+        self.from_file = False
         
         self.get_logger().info(f"SELF.PS: {self.pkg_share}")
         self.get_logger().info(f"SELF.PATH: {self.path}")
@@ -69,7 +70,7 @@ class ImageProcessingNode(Node):
                        [-1, 5,-1],
                        [0, -1, 0]])
             face_area_sharpened = cv2.filter2D(face_area, -1, kernel)
-            # face_area_blurred = cv2.GaussianBlur(face_area_sharpened,(3,3),3)
+            face_area_blurred = cv2.GaussianBlur(face_area_sharpened,(3,3),1)
 
             edges = cv2.Canny(face_area, 100, 200)
             face_area_thickened = cv2.addWeighted(face_area_sharpened, 0.5, edges, 0.5, 0)
@@ -93,9 +94,12 @@ class ImageProcessingNode(Node):
 
             face_image = self.capture_face(cv_image)
             # Step 5: Generate line drawing
-            lined_image = doodle_droid.linedraw.linedraw.sketch(face_image)
-            self.get_logger().info(f"Number of strokes: {len(lined_image)}")
-            self.get_logger().info("Finished processing")
+            try:
+                lined_image = doodle_droid.linedraw.linedraw.sketch(face_image)
+                self.get_logger().info(f"Number of strokes: {len(lined_image)}")
+                self.get_logger().info("Finished processing")
+            except:
+                self.get_logger().info("NO FACE")
             
         else:
             image = cv.imread(self.path)
@@ -125,7 +129,7 @@ class ImageProcessingNode(Node):
                 
             normalized_data.append(normalized_sublist)
 
-        self.get_logger().info(f"Normalized list to publish: {normalized_data}")
+        # self.get_logger().info(f"Normalized list to publish: {normalized_data}")
         
         json_data = json.dumps(normalized_data)
         msg = String()
