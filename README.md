@@ -1,4 +1,7 @@
 # DoodleDroid
+<img src="IMG_0814.HEIC" alt="Robot Drawing In Progress" width="300">
+
+https://github.com/user-attachments/assets/d116fecf-2de2-481f-8cd0-af1a74ca4b40
 
 ## Secondary roles:
 Dev-ops:  David
@@ -7,7 +10,8 @@ Code hygienist: Christian
 Integration: Han
 Hardware Engineer: Yanni
 
-#
+# Overview
+A franka robot arm is used to portraits as line art. Users can take a photo of themselves or others which the robot will convert to pen strokes and draw them on a paper detected and localized using april tags.
 
 # Quickstart
 ## Install
@@ -36,7 +40,3 @@ sudo apt install ros-jazzy-image-pipeline
 - Draw the photo: run `ros2 service call /draw  std_srvs/srv/Empty`. Wait patiently for your commissioned piece.
 - Once the robot returns to the `ready' pose. Disable with the enabling device and collect the masterpiece. Prep new image.
 
-# Demos:
-<img src="IMG_0814.HEIC" alt="Robot Drawing In Progress" width="300">
-
-https://github.com/user-attachments/assets/d116fecf-2de2-481f-8cd0-af1a74ca4b40
