@@ -34,7 +34,14 @@ sudo apt install ros-jazzy-image-pipeline
 - Start by calibrating the system run `ros2 service call /calibrate  std_srvs/srv/Empty`. Once calibration is complete, you can:
 - Take a photo: run `ros2 service call /take_photo  std_srvs/srv/Empty`. Retake your photo if desired, or if the output looks good,
 - Draw the photo: run `ros2 service call /draw  std_srvs/srv/Empty`. Wait patiently for your commissioned piece.
-- Once the robot returns to the `ready' pose. Disable with the enabling device and collect the masterpiece. Prep new image.  
+- Once the robot returns to the `ready' pose. Disable with the enabling device and collect the masterpiece. Prep new image.
+
+
+https://github.com/user-attachments/assets/d116fecf-2de2-481f-8cd0-af1a74ca4b40
+
+
+
+  
 
 # Demos:
 - Photos [**ELEPHANT FILL ME IN**]
