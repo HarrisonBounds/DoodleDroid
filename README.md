@@ -36,7 +36,7 @@ sudo apt install ros-jazzy-image-pipeline
 - Follow instructions on https://nu-msr.github.io/ros_notes/ros2/franka.html to connect to the Franka arm and start the controllers and moveit.
 - On your machine, run `ros2 launch doodle_droid all.launch.xml` to launch the system.
 - Start by calibrating the system run `ros2 service call /calibrate  std_srvs/srv/Empty`. Once calibration is complete, you can:
-- Take a photo: run `ros2 service call /take_photo  std_srvs/srv/Empty`. Retake your photo if desired, or if the output looks good,
+- Take a photo: run `ros2 service call /take_picture  std_srvs/srv/Empty`. Retake your photo if desired, or if the output looks good,
 - Draw the photo: run `ros2 service call /draw  std_srvs/srv/Empty`. Wait patiently for your commissioned piece.
 - Once the robot returns to the `ready' pose. Disable with the enabling device and collect the masterpiece. Prep new image.
 
