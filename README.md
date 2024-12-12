@@ -37,4 +37,6 @@ sudo apt install ros-jazzy-image-pipeline
 - Once the robot returns to the `ready' pose. Disable with the enabling device and collect the masterpiece. Prep new image.
 
 # Demos:
+<img src="IMG_0814.HEIC" alt="Robot Drawing In Progress" width="300">
+
 https://github.com/user-attachments/assets/d116fecf-2de2-481f-8cd0-af1a74ca4b40
