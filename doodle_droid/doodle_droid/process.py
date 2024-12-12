@@ -25,13 +25,14 @@ class ImageProcessingNode(Node):
         self.current_image = None
         self.pkg_name = "doodle_droid"
         self.pkg_share = get_package_share_directory(self.pkg_name)
+        self.normalized_data = []
 
         self.cascade_path = f'{self.pkg_share}/config/haarcascade_frontalface_default.xml'
         self.face_cascade = cv2.CascadeClassifier(self.cascade_path)
         
         # self.path = f"{self.pkg_share}/images/my_smiley.jpeg"
         #self.path = f"{self.pkg_share}/images/matt.png"
-        self.path = f"{self.pkg_share}/images/face_image.png"
+        self.path = f"{self.pkg_share}/images/luffy.jpg"
         # self.path = f"{self.pkg_share}/images/apple.png"
         # self.path = f"{self.pkg_share}/images/dog.png"
         # self.path = f"{self.pkg_share}/images/NU_Logo.png"
@@ -66,7 +67,7 @@ class ImageProcessingNode(Node):
                        [-1, 5,-1],
                        [0, -1, 0]])
             face_area_sharpened = cv2.filter2D(face_area, -1, kernel)
-            # face_area_blurred = cv2.GaussianBlur(face_area_sharpened,(3,3),3)
+            #face_area_blurred = cv2.GaussianBlur(face_area_sharpened,(3,3),3)
 
             edges = cv2.Canny(face_area, 100, 200)
             face_area_thickened = cv2.addWeighted(face_area_sharpened, 0.5, edges, 0.5, 0)
@@ -77,7 +78,7 @@ class ImageProcessingNode(Node):
 
 
 
-            return face_area_thickened
+            return face_area_sharpened
 
 
     def get_image_callback(self, msg):
@@ -114,7 +115,7 @@ class ImageProcessingNode(Node):
         max_val = max(all_values)
 
         # Step 2: Normalize each tuple
-        #normalized_data = []
+        
         for sublist in lined_image:
             normalized_sublist = []
             for value in sublist:

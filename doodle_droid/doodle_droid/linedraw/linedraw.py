@@ -21,8 +21,8 @@ no_cv = False
 draw_contours = True
 draw_hatch = False
 show_bitmap = True
-resolution = 1024
-hatch_size = 30
+resolution = 500
+hatch_size = 16
 contour_simplify = 1
 
 try:
@@ -203,7 +203,7 @@ def sketch(path):
         disp = Image.new("RGB",(resolution,resolution*h//w),(255,255,255))
         draw = ImageDraw.Draw(disp)
         for l in lines:
-            draw.line(l,(0,0,0),10)
+            draw.line(l,(0,0,0),5)
         disp.show()
 
     f = open(export_path,'w')
