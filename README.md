@@ -1,5 +1,8 @@
 # DoodleDroid
 
+## Group Members:
+David Matthews, Christian Tongate, Harrison Bounds, Yanni Kechriotis, Zhengxiao Han
+
 # Overview
 A franka robot arm is used to draw portraits as line art. Users can take a photo of themselves or others which the robot will convert to pen strokes and draw them on a paper detected and localized using april tags.
 
