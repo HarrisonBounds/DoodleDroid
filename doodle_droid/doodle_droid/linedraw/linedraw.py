@@ -11,6 +11,8 @@ from doodle_droid.linedraw.util import *
 
 from ament_index_python.packages import get_package_share_directory
 
+import webbrowser
+
 pkg_name = "doodle_droid"
 pkg_share = get_package_share_directory(pkg_name)
 export_path = f"{pkg_share}/images/output.svg"
@@ -221,6 +223,8 @@ def sketch(path):
 
     print(len(lines),"strokes.")
     print("done.")
+    
+    webbrowser.open(export_path)
     return lines
 
 
