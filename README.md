@@ -1,5 +1,13 @@
 # DoodleDroid
-<img src="doodle_droid.png" alt="Robot Drawing In Progress" width="300">
+
+# Overview
+A franka robot arm is used to draw portraits as line art. Users can take a photo of themselves or others which the robot will convert to pen strokes and draw them on a paper detected and localized using april tags.
+
+
+
+<div style="text-align: center;">
+  <img src="doodle_droid.png" alt="Robot Drawing In Progress" width="300">
+</div>
 
 https://github.com/user-attachments/assets/d116fecf-2de2-481f-8cd0-af1a74ca4b40
 
@@ -10,8 +18,6 @@ Code hygienist: Christian
 Integration: Han
 Hardware Engineer: Yanni
 
-# Overview
-A franka robot arm is used to draw portraits as line art. Users can take a photo of themselves or others which the robot will convert to pen strokes and draw them on a paper detected and localized using april tags.
 
 # Quickstart
 ## Install
