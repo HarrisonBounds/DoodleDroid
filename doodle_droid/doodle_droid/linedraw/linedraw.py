@@ -21,8 +21,8 @@ no_cv = False
 draw_contours = True
 draw_hatch = False
 show_bitmap = True
-resolution = 500
-hatch_size = 16
+resolution = 320
+hatch_size = 10
 contour_simplify = 1
 
 try:
@@ -100,6 +100,8 @@ def connectdots(dots):
 def getcontours(IM,sc=2):
     print("generating contours...")
     IM = find_edges(IM)
+    w,h = IM.size
+
     IM1 = IM.copy()
     IM2 = IM.rotate(-90,expand=True).transpose(Image.FLIP_LEFT_RIGHT)
     dots1 = getdots(IM1)
@@ -126,6 +128,7 @@ def getcontours(IM,sc=2):
 
     for i in range(0,len(contours)):
         contours[i] = [(v[0]*sc,v[1]*sc) for v in contours[i]]
+    # contours = [l for l in contours if min(w,h)*sc * 0.02 < np.linalg.norm(np.array(l[0]) - np.array(l[-1])) ]#< min(w,h) *sc *0.95]
 
     for i in range(0,len(contours)):
         for j in range(0,len(contours[i])):
@@ -144,9 +147,10 @@ def hatch(IM,sc=16):
         for y0 in range(h):
             x = x0*sc
             y = y0*sc
+
             if PX[x0,y0] > 144:
                 pass
-                
+                 
             elif PX[x0,y0] > 64:
                 lg1.append([(x,y+sc/4),(x+sc,y+sc/4)])
             elif PX[x0,y0] > 16:
@@ -168,6 +172,8 @@ def hatch(IM,sc=16):
                         lines[k][j] = []
         lines[k] = [l for l in lines[k] if len(l) > 0]
     lines = lines[0]+lines[1]
+
+    lines = [l for l in lines if min(w,h)*sc * 0.05 < np.linalg.norm(np.array(l[0]) - np.array(l[-1])) < min(w,h) *sc *0.25]
 
     for i in range(0,len(lines)):
         for j in range(0,len(lines[i])):

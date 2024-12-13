@@ -4,8 +4,8 @@ import rclpy.parameter
 from rclpy.node import Node
 import rclpy.time
 from sensor_msgs.msg import CompressedImage
-from std_srvs.srv import Empty, SetBool
-from cv_bridge import CvBridge
+from std_srvs.srv import Empty
+from cv_bridge import CvBridge 
 import cv2 as cv
 from doodle_droid.linedraw.linedraw import *
 from std_msgs.msg import String
@@ -20,7 +20,6 @@ class ImageProcessingNode(Node):
 
         self.image_sub = self.create_subscription(CompressedImage, '/image_raw/compressed', self.get_image_callback, 10)
         self.take_picture_service = self.create_service(Empty, '/take_picture', self.capture_image)
-        self.take_picture_service = self.create_service(SetBool, '/accept', self.accept_image)
         self.processed_image_pub = self.create_publisher(String, '/new_image', 10)
         self.current_image = None
         self.pkg_name = "doodle_droid"
@@ -32,10 +31,13 @@ class ImageProcessingNode(Node):
         
         # self.path = f"{self.pkg_share}/images/my_smiley.jpeg"
         #self.path = f"{self.pkg_share}/images/matt.png"
-        self.path = f"{self.pkg_share}/images/luffy.jpg"
+        # self.path = f"{self.pkg_share}/images/face_image.png"
         # self.path = f"{self.pkg_share}/images/apple.png"
         # self.path = f"{self.pkg_share}/images/dog.png"
         # self.path = f"{self.pkg_share}/images/NU_Logo.png"
+        # self.path = f"{self.pkg_share}/images/luffy_face.png"
+        # self.path = f"{self.pkg_share}/images/luffy.jpg"
+        self.path = f"{self.pkg_share}/images/totoro_2.jpg"
         self.bridge = CvBridge()
         self.from_file = False
         
@@ -50,9 +52,9 @@ class ImageProcessingNode(Node):
 
         for (x, y, w, h) in faces:
             # Increase the box size upwards, downwards, and slightly to the sides
-            margin_up = 60  
-            margin_down = 40  
-            margin_side = 15  
+            margin_up = 50 
+            margin_down = 30  
+            margin_side = 13
 
             # Adjust the coordinates of the bounding box
             y = max(y - margin_up, 0)  
@@ -67,7 +69,7 @@ class ImageProcessingNode(Node):
                        [-1, 5,-1],
                        [0, -1, 0]])
             face_area_sharpened = cv2.filter2D(face_area, -1, kernel)
-            #face_area_blurred = cv2.GaussianBlur(face_area_sharpened,(3,3),3)
+            face_area_blurred = cv2.GaussianBlur(face_area_sharpened,(3,3),1)
 
             edges = cv2.Canny(face_area, 100, 200)
             face_area_thickened = cv2.addWeighted(face_area_sharpened, 0.5, edges, 0.5, 0)
@@ -91,9 +93,12 @@ class ImageProcessingNode(Node):
 
             face_image = self.capture_face(cv_image)
             # Step 5: Generate line drawing
-            lined_image = doodle_droid.linedraw.linedraw.sketch(face_image)
-            self.get_logger().info(f"Number of strokes: {len(lined_image)}")
-            self.get_logger().info("Finished processing")
+            try:
+                lined_image = doodle_droid.linedraw.linedraw.sketch(face_image)
+                self.get_logger().info(f"Number of strokes: {len(lined_image)}")
+                self.get_logger().info("Finished processing")
+            except:
+                self.get_logger().info("NO FACE")
             
         else:
             image = cv.imread(self.path)
@@ -115,7 +120,7 @@ class ImageProcessingNode(Node):
         max_val = max(all_values)
 
         # Step 2: Normalize each tuple
-        
+        normalized_data = []
         for sublist in lined_image:
             normalized_sublist = []
             for value in sublist:
@@ -123,7 +128,16 @@ class ImageProcessingNode(Node):
                 normalized_tuple = tuple((component - min_val) / (max_val - min_val) for component in value)
                 normalized_sublist.append(normalized_tuple)
                 
-            self.normalized_data.append(normalized_sublist)
+            normalized_data.append(normalized_sublist)
+
+        # self.get_logger().info(f"Normalized list to publish: {normalized_data}")
+        
+        json_data = json.dumps(normalized_data)
+        msg = String()
+        msg.data = json_data
+        self.processed_image_pub.publish(msg)
+        
+        self.get_logger().info(f"DONE PUBLISHING")
               
         return response
     

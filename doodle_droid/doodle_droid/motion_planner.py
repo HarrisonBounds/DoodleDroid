@@ -539,9 +539,9 @@ class MotionPlanner():
                     (waypoint.position.x - pose_cache.position.x) ** 2 +
                     (waypoint.position.y - pose_cache.position.y) ** 2 +
                     (waypoint.position.z - pose_cache.position.z) ** 2)
-                if distance/velocity < 0.02:
+                if distance/velocity < 0.1:
                     self._node.get_logger().info(f"distance: {distance}, velocity: {velocity}, nominal dt: {distance/velocity}")
-                dt = max(distance/velocity, 0.02)
+                dt = max(distance/velocity, 0.1)
                 if waypoint_idx < 5:
                     dt = max(dt, 1.0)
                 if waypoint_idx < 3:
@@ -582,7 +582,7 @@ class MotionPlanner():
             max_step: float = 0.01,
             avoid_collisions: bool = True,
             max_acceleration_scaling_factor: float = 0.1,
-            max_velocity_scaling_factor: float = 0.1):
+            max_velocity_scaling_factor: float = 0.2):
         """
         Construct the cartesian path request.
 

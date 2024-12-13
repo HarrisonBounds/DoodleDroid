@@ -1,6 +1,6 @@
 <launch>
     <arg name="camera_name" default="usb_cam" />
-    <arg name="video_device" default="/dev/video0" />
+    <arg name="video_device" default="/dev/video4" />
     <arg name="image_width" default="640" />
     <arg name="image_height" default="480" />
     <arg name="pixel_format" default="yuyv" />
