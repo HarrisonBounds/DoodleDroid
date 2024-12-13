@@ -5,9 +5,9 @@ A franka robot arm is used to draw portraits as line art. Users can take a photo
 
 
 
-<div style="text-align: center;">
+<p align="center">
   <img src="doodle_droid.png" alt="Robot Drawing In Progress" width="300">
-</div>
+</p>
 
 https://github.com/user-attachments/assets/d116fecf-2de2-481f-8cd0-af1a74ca4b40
 
