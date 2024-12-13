@@ -36,6 +36,7 @@ from scipy.spatial.transform import Rotation as R
 
 class RoutePlannerNode(Node):
     def __init__(self):
+        """Construct the route planner node."""
         super().__init__('route_planner_node')
         self.pkg_name = "doodle_droid"
 
@@ -60,13 +61,16 @@ class RoutePlannerNode(Node):
 
         
     def _update_offset(self, msg):
+        """Update the offset of the drawing surface."""
         self.pose_offset = msg
     
     def _paper_height_callback(self, msg):
+        """Update the paper height model."""
         self.get_logger().info(f"Received paper height model: {msg.data}")
         self.paper_height_model.update(*msg.data)
     
     def pose_waypoints_from_xyz(self, pts):
+        """Convert a list of xyz points to a PoseArray."""
         waypoints = PoseArray()
         waypoints.header.frame_id = "base"
         waypoints.header.stamp = self.get_clock().now().to_msg()
@@ -85,6 +89,7 @@ class RoutePlannerNode(Node):
         return waypoints
     
     async def _execute_waypoints(self, pts):
+        """Execute a list of waypoints using the motion planner and MoveIt"""
         waypoints = self.pose_waypoints_from_xyz(pts)
         self._path_visualizer.set_visualizing_waypoints(waypoints)
         pose_traj = await self._motion_planner._construct_joint_trajectory_from_waypoints(waypoints)
@@ -102,6 +107,7 @@ class RoutePlannerNode(Node):
 
 
     async def _plot_callback(self, request, response):
+        """Generate a matplotlib plot of the drawing waypoints."""
         self.get_logger().info("plotting waypoints")
         if self._draw_waypoints is not None:
             dx = self.pose_offset.position.x-0.1
@@ -122,6 +128,7 @@ class RoutePlannerNode(Node):
         return response
 
     async def _draw_callback(self, request, response):
+        """Draw the waypoints from the previously published image."""
         if self._draw_waypoints is None:
             self.get_logger().info("No waypoints to draw")
             return response
@@ -144,6 +151,7 @@ class RoutePlannerNode(Node):
         return response
     
     def _route_callback(self, request, response):
+        """Convert the received line image into waypoints."""
         lines = json.loads(request.data)
         lines = [[(1-x,y) for (x,y) in line] for line in lines]
         pen_down_dists = [stroke_dist(np.array(line)) for line in lines]
@@ -175,6 +183,7 @@ class RoutePlannerNode(Node):
         return response
     
 def main():
+    """Enter the main loop for the route planner node."""
     rclpy.init()
     node = RoutePlannerNode()
     rclpy.spin(node)
