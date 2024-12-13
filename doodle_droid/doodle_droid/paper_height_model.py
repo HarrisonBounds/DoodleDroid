@@ -8,19 +8,6 @@ class PaperHeightModel(object):
     def get_paper_height(self, x, y):
         raise NotImplementedError()
     
-class FlatPaperHeightModel(PaperHeightModel):
-    def __init__(self, height=0.188):
-        self.height = height
-        # TODO update this to be a plane rather than a simple height
-    
-    def update_model(self, height):
-        self.height = height
-
-    def export(self):
-        return {'height': self.height}
-
-    def get_paper_height(self, x, y):
-        return self.height
     
 class PlanePaperHeightModel(PaperHeightModel):
     """
